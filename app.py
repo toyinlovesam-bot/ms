@@ -28,10 +28,14 @@ PAGES = [
 ]
 
 def set_webhook():
-    webhook_url = "https://nu-vision-20g8.onrender.com/webhook"
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook?url={webhook_url}"
+    webhook_url = "https://nu-vision-20g8.onrender.com/webhook"  # make sure this matches exactly what you use
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook"
+    payload = {
+        "url": webhook_url,
+        "allowed_updates": ["message", "callback_query"]   # ← this is critical!
+    }
     try:
-        response = requests.get(url)
+        response = requests.post(url, json=payload)
         print("Webhook set response:", response.json())
         return response.json()
     except Exception as e:
