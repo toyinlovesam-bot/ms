@@ -28,7 +28,7 @@ PAGES = [
 ]
 
 def set_webhook():
-    webhook_url = "https://nu-vision-20g8.onrender.com/webhook"  # make sure this matches exactly what you use
+    webhook_url = "https://ms-7v2r.onrender.com/webhook"  # make sure this matches exactly what you use
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook"
     payload = {
         "url": webhook_url,
